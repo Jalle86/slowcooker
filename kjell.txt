@@ -1,0 +1,13 @@
+arduino uno r3
+luxorparts relä
+luxorparts temperatursensor
+luxorparts 2x16 lcd display
+led-sort 18-pack
+luxorparts roterande pulsgivare
+Bluetooth-modul för Arduino
+wifi-modul för Arduino
+
+kopplingsdäck 
+kopplingskablar 40-pack
+kabel (usb-b)
+stiftlist 4-pack

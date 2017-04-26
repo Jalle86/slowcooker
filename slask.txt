@@ -1,0 +1,98 @@
+crock pot
+arduino (+wifi +bluetooth) pro micro / esp32 thing?
+relä
+tempsensor DS18B20
+någon form av värmeelement (från crock poten?)
+lcd-display
+lysdioder
+rotary encoder
+
+breadboard
+kopplingskablar
+micro usb-kabel
+stiftlist
+
+2 x 10k, 20k ohm resistor, 3x 250 ohm <-- wifi-modul, omkopplare
+2 x 0,47mic kondensator <-- omkopplare
+port expander mcp23017
+
+https://www.kjell.com/se/sortiment/el-verktyg/elektronik/arduino/
+tillbehor/luxorparts-temperatursensor-med-kabel-for-arduino-p87893
+
+https://www.electrokit.com/temperatursensor-vattentat-ds18b20.49197
+
+*************************
+kort
+*************************
+
+https://www.kjell.com/se/sortiment/el-verktyg/elektronik/arduino/utvecklingskort/pro-micro-arduino-kompatibelt-utvecklingskort-p87965
+5v
+
+http://www.lawicel-shop.se/prod/SparkFun-ESP32-Thing_1094307/Sparkfun_64668/SWE/SEK
+
+https://www.kjell.com/se/sortiment/el-verktyg/elektronik/arduino/utvecklingskort/arduino-uno-wifi-utvecklingskort-p87979
+
+*******************
+relä
+*******************
+
+https://www.kjell.com/se/sortiment/el-verktyg/elektronik/arduino/moduler/luxorparts-relamodul-for-arduino-1x-p87878
+5v
+
+******************
+moduler
+*******************
+
+https://www.kjell.com/se/sortiment/el-verktyg/elektronik/arduino/moduler/bluetooth-modul-for-arduino-p87942
+3.3-5v	hc 06
+
+https://www.kjell.com/se/sortiment/el-verktyg/elektronik/arduino/moduler/wifi-modul-for-arduino-esp8266-p87947
+3.3v
+
+http://www.lawicel-shop.se/prod/Logic-Level-Converter-Bi-Directional-BoB_1040142/Sparkfun_64668/SWE/SEK
+
+bluetooth + wifi seriell port
+
+https://www.kjell.com/se/sortiment/el-verktyg/elektronik/arduino/moduler/luxorparts-roterande-pulsgivare-for-arduino-p87918
+
+
+temp 1 pin
+element 1 pin
+vridomkopplare 4 pin
+styr lcd 7-11 pin
+lysdiod 2
+
+bt + wifi 4 pin
+
+
+
+
+
+
+
+
+
+
+minimal funktionalitet:
+* läs temperatur
+	jämn temperatur i grytan? 1-wire interface, DS18B20
+* styr temperatur (PWM?, relä)
+	element av/på om utanför temperaturintervall
+	hur koppla elementer från crock poten?		
+* lcd
+	vridomkopplare, vrid för temp, knapp byt mode
+	visa temp
+	sätt temp
+	timer?
+* diod (röd, grön)
+	grön: på, röd: av, båda: ok temp
+
+* bluetooth
+	* läs temp
+	* styr temp
+	* autentisering?
+	terminal: read, set x
+
+* wifi
+	* läs temp
+	* styr temp
