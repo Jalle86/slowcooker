@@ -1,2 +1,7 @@
 25/4
 Köpt hårdvara från Kjell & CO.
+
+27/4
+Pulsgivare + LCD implementerade. Behöver pull-up-resistor till
+temperatursensorn. Har implementerat större delen av den grundläggande
+programlogiken.

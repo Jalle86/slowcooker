@@ -11,7 +11,7 @@ static void enable_interrupt(byte pin)
 RotaryEncoder::RotaryEncoder(byte d1, byte d2, byte sw, isr_func ccwf,
         isr_func cwf, isr_func buttonf)
 {
-    state        	= UP;
+    rotating        = false;
     button_down     = false;
 
     this->d1         = d1;
@@ -47,16 +47,14 @@ void RotaryEncoder::update(void)
   else if (button_down && sws == HIGH)
     button_down = false;
   
-  if (state == UP && (d1s == LOW || d2s == LOW))
+  if (!rotating && (d1s == LOW || d2s == LOW))
   {
-    state = ROTATE_DOWN;
+    rotating = true;
     if (d1s == LOW)
       ccwf();
      else
       cwf();
   }
-  else if (state == ROTATE_DOWN && (d1s == LOW && d2s == LOW))
-    state = DOWN;
-  else if (state == DOWN && (d1s == HIGH && d2s == HIGH)
-    state = UP;
+  else if (rotating && (d1s == HIGH && d2s == HIGH))
+    rotating = false;
 }

@@ -3,21 +3,13 @@
 
 #include "Arduino.h"
 
-enum encoder_state
-{
-    UP,
-    ROTATE_DOWN,
-    DOWN,
-    ROTATE_UP,
-};
-
 typedef void (*isr_func)(void);
 
 class RotaryEncoder
 {
     private:
     byte d1, d2, sw;
-    enum encoder_state state;
+    bool rotating;
     bool button_down;
     isr_func ccwf, cwf, buttonf;
 
