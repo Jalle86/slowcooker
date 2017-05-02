@@ -5,3 +5,13 @@ Köpt hårdvara från Kjell & CO.
 Pulsgivare + LCD implementerade. Behöver pull-up-resistor till
 temperatursensorn. Har implementerat större delen av den grundläggande
 programlogiken.
+
+28/4
+Periferienheter för att mäta och reglera temperatur är implementerade.
+Kör on/off-reglering med ett relä, men beroende på testresultat så
+kan PID-reglering vara nödvändigt. Behöver en crash course i
+regleringsteknik för att förstå det fullt ut.
+Om jag använder mig av PID-reglering så kommer jag behöva någon annan
+lösning att driva värmekällan än ett relö, som kommer att bli utslitet
+väldigt fort.
+Kommer även att behöva kalibrera tempsensorn, på ett eller annat sätt.

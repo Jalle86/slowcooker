@@ -25,7 +25,7 @@
 #define RELAY   10
 
 #define TEMP_MAX 80
-#define TEMP_MIN 40
+#define TEMP_MIN 10
 
 void print_target(void);
 void print_temp(void);
@@ -33,8 +33,8 @@ void inc_temp(void);
 void dec_temp(void);
 void foo(void);
 
-int target = 50;
-const float interval = 0.1;
+int target = 45;
+const float interval = 2;
 
 LiquidCrystal lcd(RS, RW, ENABLE, DB4, DB5, DB6, DB7);
 RotaryEncoder enc(D1, D2, SWITCH, inc_temp, dec_temp, foo);
