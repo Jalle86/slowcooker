@@ -22,3 +22,7 @@ Behöver en bunt resistorer (spänningsdelare) och möjligen andra komponenter f
 3/5
 Bluetooth pretty much funktionabelt och har lagt till en LED som indikerar om grytan är på. Är läge att stöka om i koden och
 organisera den bättre, men jag måste klura ut hur interfacet till användaren ska fungera.
+
+4/5
+Försökt få igång wifi-modulen utan någon effekt. Risken är stor att jag behöver en extern strömkälla då modulen slukar en hel
+del (upp till 200-300mA).

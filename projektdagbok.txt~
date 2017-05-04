@@ -20,5 +20,8 @@ Kommer även att behöva kalibrera tempsensorn, på ett eller annat sätt.
 Behöver en bunt resistorer (spänningsdelare) och möjligen andra komponenter för att komma någonvart med de kvarvarande modulerna.
 
 3/5
-Bluetooth pretty much funktionabelt och har lagt till en LED som indikerar om grytan är på. Är läge att stöka om i koden och organisera den bättre, men jag måste klura ut hur
-interfacet till användaren ska fungera.
+Bluetooth pretty much funktionabelt och har lagt till en LED som indikerar om grytan är på. Är läge att stöka om i koden och
+organisera den bättre, men jag måste klura ut hur interfacet till användaren ska fungera.
+
+4/5
+

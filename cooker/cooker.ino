@@ -29,12 +29,16 @@
 #define ONEWIRE 9
 
 // BT module
-#define BT_TX 18 //A4, goes to rx on module through voltage divider
-#define BT_RX 19 //A5, goes to tx on module
+#define BT_TX   18 //A4, goes to rx on module through voltage divider
+#define BT_RX   19 //A5, goes to tx on module
+
+// WiFi module
+#define WIFI_TX 14
+#define WIFI_RX 15
 
 #define RELAY   10
 
-#define LED 17
+#define LED     17
 
 void print_target(int col, int row);
 void print_temperature(int col, int row, float temp);
@@ -47,7 +51,7 @@ void foo(void);
 int target = 21; // desired temperature
 const float interval = 2;
 int time; //time of day measured in seconds
-int timeleft = 10; //timer
+int timeleft = 3600; //timer
 int temperature;
 bool activated;
 
@@ -56,6 +60,7 @@ RotaryEncoder enc(D1, D2, SWITCH, inc_temp, dec_temp, foo);
 OneWire tempWire(ONEWIRE);
 DallasTemperature sensors(&tempWire);
 SoftwareSerial BT(BT_RX, BT_TX, false);
+SoftwareSerial WF(WIFI_RX, WIFI_TX, false);
 
 int order_of_magnitude(int num)
 {
@@ -142,9 +147,12 @@ void dec_temp(void)
 
 void foo(void)
 {
-  activated = !activated;
-  digitalWrite(LED, activated);
-  Serial.println("ping");
+  if (timeleft)
+  {
+    activated = !activated;
+    digitalWrite(LED, activated);
+    Serial.println("ping");
+  }
 }
 
 void init_timer(void)
@@ -190,8 +198,15 @@ ISR (PCINT0_vect)
 SIGNAL(TIMER1_COMPA_vect)
 {
   update_temperature();
-  if (activated)
-    timeleft = timeleft > 0 ? timeleft - 1 : 0;
+  if (activated && timeleft)
+    timeleft--;
+  if (!timeleft)
+  {
+    activated = false;
+    digitalWrite(LED, LOW);
+    digitalWrite(RELAY, LOW);
+  }
+  
   print_time(8, 1);
 }
 
@@ -210,7 +225,10 @@ void setup(void)
   lcd.begin(16, 2);
   pciSetup(BT_RX);
   pciSetup(BT_TX);
+  pciSetup(WIFI_RX);
+  pciSetup(WIFI_TX);
   BT.begin(9600);
+  WF.begin(115200);
   
   pinMode(RELAY, OUTPUT);
   pinMode(LED, OUTPUT);
@@ -240,9 +258,12 @@ void loop(void)
     // Upon waking up, sketch continues from this point.
     sleep_disable();*/
     
-    /*if (BT.available())
-      Serial.write(BT.read());
+    while (WF.available())
+    {
+      Serial.println("bingong");
+      Serial.write(WF.read());
+    }
       
-    if (Serial.available())
-        BT.write(Serial.read());*/
+    while (Serial.available())
+        WF.write(Serial.read());
 }
