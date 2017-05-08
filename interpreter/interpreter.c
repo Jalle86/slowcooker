@@ -1,0 +1,177 @@
+#include "interpreter.h"
+
+#include <string.h>
+#include <stdbool.h>
+
+enum permission
+{
+	P_R 	= 0x01; // read
+	P_W 	= 0x02; // write
+	P_RW 	= 0x03; // equals P_R & P_W
+};
+
+enum token_id
+{
+	T_ERROR,
+	
+	// commands
+	T_GET,
+	T_SET,
+	
+	T_VARIABLE,
+	
+	T_INTEGER,
+	
+	T_END,
+	
+	NUM_OF_TOKENS,
+};
+
+enum var_type
+{
+	V_NONE = 0,
+	
+	V_TEMP,
+	V_TIMER,
+	V_STATUS,
+	V_TARGET,
+	
+	NUM_OF_VARS,
+};
+
+struct token
+{
+	enum token_id id;
+	char value;
+};
+
+struct var_entry
+{
+	int *addr;
+	char *symbol;
+	enum permission perm;
+	int min;
+	int max;
+};
+
+// them variables
+
+int temperature;
+int target;
+int timer;
+bool activated;
+
+struct token current_tkn;
+
+static struct var_entry variables[NUM_OF_VARS] =
+{
+	V_NONE 	 = { 0 };
+	V_TEMP   = { &temp, 		"TEMP"		P_R,  0, 		0		};
+	V_TIMER  = { &timer, 		"TIMER"		P_RW, 0, 		3600*24	};
+	V_STATUS = { &activated, 	"STATUS"	P_RW, false,	true 	};
+	V_TARGET = { &target,		"TARGET"	P_RW, 40, 		80		};
+};
+
+static bool is_number(char *string)
+{
+	char *strpos = string;
+	
+	if (*strpos == '\0') //empty string
+		return false;
+	
+	while(*strpos)
+		if (!isdigit(*strpos++))
+			return false;
+			
+	return true;
+}
+
+static enum var_type is_variable(char *string)
+{
+	//skip V_NONE
+	for (int i = 1; i < sizeof(variables)/sizeof(*variables); i++)
+		if (!strcmp(string, variables[i].symbol))
+			return i;
+			
+	return 0; //no matching variable
+}
+
+static bool eat(token_id tkn)
+{
+	if (tkn == current_tkn.id)
+	{
+		current_tkn = next_token();
+		return true;
+	}
+	else
+		return false;
+}
+
+static struct token get_token(char *str)
+{
+	enum var_type var;
+	
+	// really ugly if-else chain
+	if (is_number(str))
+		return (struct token) { INTEGER, strtol(str) };
+		
+	else if (var = is_variable(str))
+		return (struct token) { T_VARIABLE, var };
+		
+	else if (!strcmp(str, "GET"))
+		return (struct token) { T_GET, 0 };
+		
+	else if (!strcmp(str, "SET"))
+		return (struct token) { T_SET, 0 };
+		
+	else if (!strcmp(str, ""))
+		return (struct token) { T_END, 0 };
+		
+	else
+		return (struct token) { T_ERROR, 0 };
+}
+
+static struct token next_token(void)
+{
+	char *str = strtok(NULL, " ");
+	
+	return get_token(str);
+}
+
+bool interpret(char *string, char *result)
+{
+	current_tkn = get_token(strtok(string, " "));
+	
+	if (current_tkn.id == T_GET)
+	{
+		if (eat(T_VAR))
+		{
+			sprintf(result, "%d", *(variables[current_tkn.value].addr));
+			return true;
+		}
+	}
+	else if (current_tkn.id == T_SET)
+	{
+		if (eat(T_VAR))
+		{
+			enum var_type value = current_tkn.value;
+			if (eat(T_INTEGER))
+			{
+				*(variables[value].addr) = current_tkn.value;
+				return true;
+			}
+		}
+	}
+	
+	return false;
+}
+
+int main(void)
+{
+	char buffer[100];
+	while(1)
+	{
+		scanf("%s", buffer);
+		interpret(buffer, NULL);
+	}
+}
