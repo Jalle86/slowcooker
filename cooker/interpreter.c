@@ -1,4 +1,5 @@
 #include "interpreter.h"
+#include "vars.h"
 
 #include <string.h>
 #include <ctype.h>
@@ -45,7 +46,7 @@ enum var_type
 struct token
 {
 	enum token_id id;
-	uint8_t value;
+	unsigned int value;
 };
 
 struct var_entry
@@ -71,7 +72,7 @@ static struct var_entry variables[NUM_OF_VARS] =
 {
 	[V_NONE]   = { 0 },
 	[V_TEMP]   = { &temperature, 		"TEMP",	  P_R,  0, 		0 },
-	[V_TIMER]  = { &timer, 		 		"TIMER",  P_RW, 0, 		3600*24	},
+	[V_TIMER]  = { &timer, 		 		"TIMER",  P_RW, 0, 		3600	},
 	[V_STATUS] = { (int *)(&activated),	"STATUS", P_RW, false, 	true },
 	[V_TARGET] = { &target,		 		"TARGET", P_RW, 40,	 	80 },
 };
@@ -96,8 +97,9 @@ static bool is_number(char *string)
 
 static enum var_type is_variable(char *string)
 {
+        int i = 0;
 	//skip V_NONE
-	for (int i = 1; i < sizeof(variables)/sizeof(*variables); i++)
+	for (i = 1; i < sizeof(variables)/sizeof(*variables); i++)
 		if (!strcmp(string, variables[i].symbol))
 			return i;
 			
@@ -166,6 +168,8 @@ bool interpret(char *string, char *result)
 			sprintf(result, "%d", *(variables[var_tkn.value].addr));
 			return true;
 		}
+                else
+                  sprintf(result, "%s", "VAR");
 	}
 	else if (eat(T_SET))
 	{
@@ -179,9 +183,14 @@ bool interpret(char *string, char *result)
 				sprintf(result, "%s", "OK");
 				return true;
 			}
+                        else
+                          sprintf(result, "%s", "INT");
 		}
+                else
+                  sprintf(result, "%s", "VAR");
 	}
-	
-	sprintf(result, "%s", "ERROR");
+	else
+	  sprintf(result, "%s", "CMD");
+
 	return false;
 }

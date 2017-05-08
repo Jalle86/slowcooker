@@ -26,3 +26,6 @@ organisera den bättre, men jag måste klura ut hur interfacet till användaren 
 4/5
 Försökt få igång wifi-modulen utan någon effekt. Risken är stor att jag behöver en extern strömkälla då modulen slukar en hel
 del (upp till 200-300mA).
+
+8/5
+En tolk som ger kommandon till systemet fungerar ihop med bluetoothmodulen. Börjar få lite ont om idéer att göra för tillfället.

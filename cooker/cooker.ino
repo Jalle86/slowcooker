@@ -4,6 +4,9 @@
 #include <OneWire.h>
 #include <RotaryEncoder.h>
 
+#include "vars.h"
+#include "interpreter.h"
+
 #define TEMP_MAX 80
 #define TEMP_MIN 10
 
@@ -40,6 +43,8 @@
 
 #define LED     17
 
+typedef int fixed; //fixed point number, one decimal place
+
 void print_target(int col, int row);
 void print_temperature(int col, int row, float temp);
 void print_time(int col, int row);
@@ -48,11 +53,13 @@ void inc_temp(void);
 void dec_temp(void);
 void foo(void);
 
+bool tick = false; //one tick every second
+
+// cooker properties
 int target = 21; // desired temperature
 const float interval = 2;
-int time; //time of day measured in seconds
-int timeleft = 3600; //timer
-int temperature;
+int timer = 3600; //timer measured in seconds
+fixed temperature;
 bool activated;
 
 LiquidCrystal lcd(RS, RW, ENABLE, DB4, DB5, DB6, DB7);
@@ -71,9 +78,9 @@ int order_of_magnitude(int num)
   return pos;
 }
 
-void print_time(int col, int row)
+void print_timer(int col, int row)
 {
-  int tmp = timeleft;
+  int tmp = timer;
   
   lcd.setCursor(col, row);
   lcd.print("00:00:00");
@@ -101,58 +108,31 @@ void print_target(int col, int row)
   lcd.print(target);
 }
 
-void print_temperature(int col, int row, float temp)
+void print_temperature(int col, int row)
 {
-  static int oldtemp = 0;
-  static int wait = 5;
   char str[10];
   lcd.setCursor(col, row);
   
-  //sadly enough sprintf is not supported for floats on the Arduino
-  //platform. We have to convert the value to an int and work from
-  //there
-  int tempint = temp * 10;
   //format "xx.x" degrees
-  sprintf(str, "%02d%c%d", tempint / 10, '.', tempint % 10);
-  if (tempint != oldtemp)
-  {
-    lcd.print(str);
-    oldtemp = tempint;
-  }  
+  sprintf(str, "%02d%c%d", temperature / 10, '.', temperature % 10);
   
-  if (!(--wait))
-  {
-    wait = 5;
-    //Serial.println(temp);
-  }
+  lcd.print(str);
 }
 
 void inc_temp(void)
 {
-  int old = target;
   target = target == TEMP_MAX ? TEMP_MAX : target + 1;
-  
-  if (target != old)
-    print_target(0, 0);
 }
 
 void dec_temp(void)
 {
-  int old = target;
   target = target == TEMP_MIN ? TEMP_MIN : target - 1;
-  
-  if (target != old)
-    print_target(0, 0);
 }
 
 void foo(void)
 {
-  if (timeleft)
-  {
+  if (timer)
     activated = !activated;
-    digitalWrite(LED, activated);
-    Serial.println("ping");
-  }
 }
 
 void init_timer(void)
@@ -179,6 +159,7 @@ void update_temperature(void)
   sensors.requestTemperatures();
   delay(1);
   volatile float t = sensors.getTempCByIndex(0);
+  temperature = t * 10;
   
   if (!activated)
     digitalWrite(RELAY, LOW);
@@ -186,28 +167,18 @@ void update_temperature(void)
     digitalWrite(RELAY, HIGH);
   else if (t > target + interval)
     digitalWrite(RELAY, LOW);
-    
-  print_temperature(0, 1, t);
-}
-
-ISR (PCINT0_vect)
-{
-  enc.update();
 }
 
 SIGNAL(TIMER1_COMPA_vect)
 {
-  update_temperature();
-  if (activated && timeleft)
-    timeleft--;
-  if (!timeleft)
-  {
-    activated = false;
-    digitalWrite(LED, LOW);
-    digitalWrite(RELAY, LOW);
-  }
+  tick = true;
   
-  print_time(8, 1);
+  print_timer(8, 1);
+}
+
+ISR(PCINT0_vect)
+{
+  enc.update();
 }
 
 void pciSetup(byte pin)
@@ -228,7 +199,7 @@ void setup(void)
   pciSetup(WIFI_RX);
   pciSetup(WIFI_TX);
   BT.begin(9600);
-  WF.begin(115200);
+  //WF.begin(115200);
   
   pinMode(RELAY, OUTPUT);
   pinMode(LED, OUTPUT);
@@ -242,28 +213,75 @@ void setup(void)
   lcd.write('C');
   
   init_timer();
+  update_temperature();
+}
+
+void serial_command(SoftwareSerial &my_serial)
+{
+    char input_buffer[100];
+    char result_buffer[10];
+    int pos = 0;
+    
+    if (my_serial.available())
+      delay(5); //make sure we don't read the buffer too fast
+      
+    while (my_serial.available())
+      input_buffer[pos++] = my_serial.read();
+    
+    if (!pos) //no command input
+      return;
+
+    input_buffer[pos] = '\0';
+    
+    Serial.println(input_buffer);
+    interpret(input_buffer, result_buffer);
+    my_serial.println(result_buffer);
+}
+
+void update_display(void)
+{  
+  static int temp_old = 0;
+  static int target_old = 0;
+  
+  noInterrupts(); //make sure interrupts don't mess with the lcd
+  
+  if (temperature != temp_old)
+  {
+    print_temperature(0, 1);
+    temp_old = temperature;
+  }
+    
+  if (target != target_old)
+  {
+    print_target(0, 0);
+    target_old = target;
+  }
+  
+  interrupts();
 }
 
 void loop(void)
 {
-    // Choose our preferred sleep mode:
-    /*set_sleep_mode(SLEEP_MODE_IDLE);
- 
-    // Set sleep enable (SE) bit:
-    sleep_enable();
- 
-    // Put the device to sleep:
-    sleep_mode();
- 
-    // Upon waking up, sketch continues from this point.
-    sleep_disable();*/
+    static int temperature_timer = 0;
+    serial_command(BT);
     
-    while (WF.available())
+    if (tick)
     {
-      Serial.println("bingong");
-      Serial.write(WF.read());
+      tick = false;
+      if (activated)
+        --timer > 0 ? timer : 0;
+          
+      temperature_timer++;
+      if (temperature_timer == 10)
+      {
+        update_temperature();
+        temperature_timer = 0;
+      }
+        
+      if (!timer)
+        activated = false;
     }
-      
-    while (Serial.available())
-        WF.write(Serial.read());
+    
+    update_display();
+    digitalWrite(LED, activated);
 }
