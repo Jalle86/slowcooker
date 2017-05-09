@@ -6,12 +6,11 @@
 enum encoder_state
 {
     UP,
-    ROTATE_DOWN,
+    ROTATING,
     DOWN,
-    ROTATE_UP,
 };
 
-typedef void (*isr_func)(void);
+typedef void (*cb_func)(void);
 
 class RotaryEncoder
 {
@@ -19,7 +18,9 @@ class RotaryEncoder
     byte d1, d2, sw;
     enum encoder_state state;
     bool button_down;
-    isr_func ccwf, cwf, buttonf;
+    cb_func ccwcb; // counter clockwise
+    cb_func cwcb; // clockwise
+    cb_func buttoncb;
 
     public:
     RotaryEncoder(byte d1, byte d2, byte sw, isr_func ccwf,
