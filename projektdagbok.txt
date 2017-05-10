@@ -29,3 +29,7 @@ del (upp till 200-300mA).
 
 8/5
 En tolk som ger kommandon till systemet fungerar ihop med bluetoothmodulen. Börjar få lite ont om idéer att göra för tillfället.
+
+10/5
+Har fått igång kommunikationen med Wifi-modulen, vilket var en mardröm. Kontakstudsarna på pulsgivaren är i stort sett fixade också.
+Interfacet till systemet är även förbättrat men är långt ifrån bra.

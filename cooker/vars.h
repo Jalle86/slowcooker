@@ -1,9 +1,11 @@
 #ifndef VARS_H
 #define VARS_H
 
+#include <stdint.h>
+
 extern int temperature;
 extern int target;
-extern int timer;
+extern uint32_t timer;
 extern bool activated;
 
 #endif

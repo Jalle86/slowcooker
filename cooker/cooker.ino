@@ -51,14 +51,21 @@
 #define TARGET_X 0
 #define TARGET_Y 0
 
+enum direction
+{
+  COUNTERCLOCKWISE,
+  CLOCKWISE,
+};
+
+typedef void (*mode_func)(enum direction);
 typedef int fixed; //fixed point number, one decimal place
 
 void print_timer(int col, int row);
 void print_target(int col, int row);
 void print_temperature(int col, int row, float temp);
 
-void inc_temp(void);
-void dec_temp(void);
+void inc_counter(void);
+void dec_counter(void);
 void button_down(void);
 
 void init_timer(void);
@@ -66,17 +73,33 @@ void update_temperature(void);
 void pci_setup(byte pin);
 void update_display(void);
 
+void change_target(enum direction d);
+void change_status(enum direction d);
+void change_hours(enum direction d);
+void change_minutes(enum direction d);
+void change_seconds(enum direction d);
+
 bool tick = false; //one tick every second
+
+mode_func modes[] =
+{
+  change_target,
+  change_hours,
+  change_minutes,
+  change_seconds,
+  change_status,
+};
+int current_mode = 0;
 
 // cooker properties
 int target = 40; // desired temperature
 const float interval = 2;
-int timer = 3600; //timer measured in seconds
+uint32_t timer = 0; //timer measured in seconds
 fixed temperature;
 bool activated;
 
 LiquidCrystal lcd(RS, RW, ENABLE, DB4, DB5, DB6, DB7);
-RotaryEncoder enc(D1, D2, SWITCH, inc_temp, dec_temp, button_down);
+RotaryEncoder enc(D1, D2, SWITCH, inc_counter, dec_counter, button_down);
 OneWire tempWire(ONEWIRE);
 DallasTemperature sensors(&tempWire);
 SoftwareSerial BT(BT_RX, BT_TX, false);
@@ -90,7 +113,7 @@ void print_timer(int col, int row)
   static int seconds_old = 0;
   char num_string[3] = { 0 };
   
-  int tmp = timer;
+  uint32_t tmp = timer;
   
   // hours
   hours = tmp / 3600;
@@ -143,23 +166,19 @@ void print_temperature(int col, int row)
   lcd.print(str);
 }
 
-void inc_temp(void)
+void inc_counter(void)
 {
-  target = (target == TEMP_MAX) ? TEMP_MAX : target + 1;
+  modes[current_mode](CLOCKWISE);
 }
 
-void dec_temp(void)
+void dec_counter(void)
 {
-  target = (target == TEMP_MIN) ? TEMP_MIN : target - 1;
+  modes[current_mode](COUNTERCLOCKWISE);
 }
 
 void button_down(void)
 {
-  if (timer)
-    activated = !activated;
-    
-  if (activated) //timer starting, reset timer counter
-      TCNT1 = 0;
+  current_mode = ++current_mode % (sizeof(modes) / sizeof(*modes));
 }
 
 void init_timer(void)
@@ -192,16 +211,14 @@ void update_temperature(void)
     digitalWrite(RELAY, HIGH);
   else if (t > target + interval)
     digitalWrite(RELAY, LOW);
-  
-  // Let the sensor do it's work while we wait for the next reading
-  sensors.requestTemperatures();
 }
 
 SIGNAL(TIMER1_COMPA_vect)
 {
   tick = true;
   
-  print_timer(TIMER_X, TIMER_Y);
+  if (activated)
+    print_timer(TIMER_X, TIMER_Y);
 }
 
 ISR(PCINT0_vect)
@@ -217,11 +234,109 @@ void pci_setup(byte pin)
     PCICR  |= bit (digitalPinToPCICRbit(pin)); // enable interrupt for the group
 }
 
+void serial_command(SoftwareSerial &my_serial)
+{
+    char input_buffer[100];
+    char result_buffer[10];
+    int pos = 0;
+    
+    if (my_serial.available())
+      delay(5); //make sure we don't read the buffer too fast
+      
+    while (my_serial.available())
+      input_buffer[pos++] = my_serial.read();
+    
+    if (!pos) //no command input
+      return;
+
+    input_buffer[pos] = '\0';
+    
+    Serial.println(input_buffer);
+    interpret(input_buffer, result_buffer);
+    my_serial.println(result_buffer);
+}
+
+void update_display(void)
+{  
+  static int temp_old = 0;
+  static int target_old = 0;
+  static int timer_old = 0;
+  
+  noInterrupts(); //make sure interrupts don't mess with the lcd
+  
+  if (temperature != temp_old)
+  {
+    print_temperature(TEMP_X, TEMP_Y);
+    temp_old = temperature;
+  }
+    
+  if (target != target_old)
+  {
+    print_target(TARGET_X, TARGET_Y);
+    target_old = target;
+  }
+  
+  if (timer != timer_old)
+  {
+    print_timer(TIMER_X, TIMER_Y);
+    target_old = target;
+  }
+  
+  lcd.setCursor(15, 0);
+  lcd.print(current_mode);
+  interrupts();
+}
+
+void change_target(enum direction d)
+{
+  if (d == CLOCKWISE)
+    target = (target == TEMP_MAX) ? TEMP_MAX : target + 1;
+  else
+    target = (target == TEMP_MIN) ? TEMP_MIN : target - 1;
+}
+
+void change_status(enum direction d)
+{
+  if (timer)
+    activated = !activated;
+    
+  if (activated) //timer starting, reset timer counter
+      TCNT1 = 0;
+}
+
+void change_hours(enum direction d)
+{
+  int hours = timer / 3600;
+  
+  if (d == CLOCKWISE && hours < 99)
+    timer += 3600;
+  else if (d == COUNTERCLOCKWISE && hours > 0)
+    timer -= 3600;
+}
+
+void change_minutes(enum direction d)
+{
+  int minutes = (timer % 3600) / 60;
+  if (d == CLOCKWISE && minutes < 59)
+    timer += 60;
+  else if (d == COUNTERCLOCKWISE && minutes > 0)
+    timer -= 60;
+}
+
+void change_seconds(enum direction d)
+{
+  int seconds = (timer % 3600) % 60;
+  if (d == CLOCKWISE && seconds < 59)
+    timer++;
+  else if (d == COUNTERCLOCKWISE && seconds > 0)
+    timer--;
+}
+
 void setup(void)
 {
   sensors.begin();
   enc.begin();
-  Serial.begin(9600);
+  Serial.begin(115200);
   lcd.begin(16, 2);
   pci_setup(BT_RX);
   pci_setup(BT_TX);
@@ -252,57 +367,24 @@ void setup(void)
   sensors.requestTemperatures(); //initial reading
   delay(750); //wait for first conversion
   update_temperature();
-}
-
-void serial_command(SoftwareSerial &my_serial)
-{
-    char input_buffer[100];
-    char result_buffer[10];
-    int pos = 0;
-    
-    if (my_serial.available())
-      delay(5); //make sure we don't read the buffer too fast
-      
-    while (my_serial.available())
-      input_buffer[pos++] = my_serial.read();
-    
-    if (!pos) //no command input
-      return;
-
-    input_buffer[pos] = '\0';
-    
-    Serial.println(input_buffer);
-    interpret(input_buffer, result_buffer);
-    my_serial.println(result_buffer);
-}
-
-void update_display(void)
-{  
-  static int temp_old = 0;
-  static int target_old = 0;
+  print_temperature(TEMP_X, TEMP_Y);
   
-  noInterrupts(); //make sure interrupts don't mess with the lcd
-  
-  if (temperature != temp_old)
-  {
-    print_temperature(TEMP_X, TEMP_Y);
-    temp_old = temperature;
-  }
-    
-  if (target != target_old)
-  {
-    print_target(0, 0);
-    target_old = target;
-  }
-  
-  interrupts();
+  Serial.print("AT\r\n");
+  Serial.flush();
+  delay(1);
 }
 
 void loop(void)
 {
     static int temperature_timer = 0;
-    serial_command(BT);
+    //serial_command(BT);
     
+    while(Serial.available())
+    {
+      BT.write(Serial.read());
+      digitalWrite(LED, 1);
+    }
+   
     if (tick)
     {
       tick = false;
@@ -310,16 +392,22 @@ void loop(void)
         --timer > 0 ? timer : 0;
           
       temperature_timer++;
-      if (temperature_timer == 10)
+      
+      // get temperature readings and read on next tick
+      if (temperature_timer == 9)
+      {
+        sensors.requestTemperatures();
+      }
+      else if (temperature_timer == 10)
       {
         update_temperature();
         temperature_timer = 0;
       }
-        
+
       if (!timer)
         activated = false;
     }
     
     update_display();
-    digitalWrite(LED, activated);
+    //digitalWrite(LED, activated);
 }
