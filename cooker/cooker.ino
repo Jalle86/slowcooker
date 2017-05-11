@@ -234,17 +234,48 @@ void pci_setup(byte pin)
     PCICR  |= bit (digitalPinToPCICRbit(pin)); // enable interrupt for the group
 }
 
+void wifi_command(SoftwareSerial &wifi)
+{
+    char input_buffer[100];
+    char result_buffer[10];
+    int pos = 0;
+    
+    wifi.listen();
+      
+    while (wifi.available())
+    {
+      input_buffer[pos++] = wifi.read();
+      delay(1);
+    }
+    
+    if (!pos) //no command input
+      return;
+
+    input_buffer[pos] = '\0';
+    
+    Serial.println(input_buffer);
+    interpret(input_buffer, result_buffer);
+    
+    wifi.print("AT+CIPSEND=0,");
+    wifi.print(strlen(result_buffer));
+    wifi.print("\r\n");
+    delay(1000);
+    wifi.print(result_buffer);
+}
+
 void serial_command(SoftwareSerial &my_serial)
 {
     char input_buffer[100];
     char result_buffer[10];
     int pos = 0;
     
-    if (my_serial.available())
-      delay(5); //make sure we don't read the buffer too fast
+    my_serial.listen();
       
     while (my_serial.available())
+    {
       input_buffer[pos++] = my_serial.read();
+      delay(1);
+    }
     
     if (!pos) //no command input
       return;
@@ -279,7 +310,7 @@ void update_display(void)
   if (timer != timer_old)
   {
     print_timer(TIMER_X, TIMER_Y);
-    target_old = target;
+    timer_old = timer;
   }
   
   lcd.setCursor(15, 0);
@@ -336,15 +367,14 @@ void setup(void)
 {
   sensors.begin();
   enc.begin();
-  Serial.begin(115200);
+  Serial.begin(9600);
   lcd.begin(16, 2);
   pci_setup(BT_RX);
   pci_setup(BT_TX);
   pci_setup(WIFI_RX);
   pci_setup(WIFI_TX);
   BT.begin(9600);
-  WF.begin(115200);
-  BT.listen();
+  WF.begin(14400); //28800
   
   pinMode(RELAY, OUTPUT);
   pinMode(LED, OUTPUT);
@@ -369,24 +399,75 @@ void setup(void)
   update_temperature();
   print_temperature(TEMP_X, TEMP_Y);
   
-  Serial.print("AT\r\n");
-  Serial.flush();
-  delay(1);
+  BT.listen();
+  Serial.print("AT+UART_DEF=9600,8,1,0,0\r\n");
+  delay(1000);
+  Serial.print("AT+CIPMUX=1\r\n");
+  delay(1000);
+  Serial.print("AT+CIPSERVER=1,9001\r\n");
+  delay(1000);
+  Serial.print("AT+CIPSEND=0,6\r\n");
+  delay(1000);
+  Serial.print("ping\r\n");
+  delay(1000);
+  /*WF.listen();
+  delay(500);
+  WF.print("AT+CIPMUX=1\r\n");
+  delay(1000);
+  WF.print("AT+CIPSERVER=1,9001\r\n");
+  delay(1000);
+  /*WF.print("AT+CIPSEND=0,5\r\n");
+  delay(1000);
+  WF.println("test");
+  WF.print("AT+CIPCLOSE=0\r\n");
+  /*delay(1000);
+  /*WF.print("+IPD,0,5\r\n");
+  delay(1000);
+   while(WF.available())
+     Serial.write(WF.read());
+   Serial.println("row");*/
+  
+  while(Serial.available())
+    BT.write(Serial.read());
 }
 
 void loop(void)
 {
     static int temperature_timer = 0;
+    
     //serial_command(BT);
+    //wifi_command(WF);
+    
+    /*while(WF.available())
+    {
+      digitalWrite(LED, 1);
+      Serial.write(WF.read());
+    }*/
+    
+    while(BT.available())
+    {
+      Serial.write(BT.read());
+      delay(1);
+    }
     
     while(Serial.available())
     {
-      BT.write(Serial.read());
-      digitalWrite(LED, 1);
+      delay(500);
+      char buf[20];
+      Serial.find("IPD,0,");
+      int i;
+      int num = Serial.read() - 48;
+      Serial.read();
+      for (i = 0; i < num; i++)
+        buf[i] = Serial.read();
+      buf[num] = 0;
+      BT.println(buf);
+      while(Serial.available())
+        Serial.read();
     }
-   
+    
     if (tick)
-    {
+    {      
       tick = false;
       if (activated)
         --timer > 0 ? timer : 0;
@@ -409,5 +490,5 @@ void loop(void)
     }
     
     update_display();
-    //digitalWrite(LED, activated);
+    digitalWrite(LED, activated);
 }
