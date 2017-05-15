@@ -37,3 +37,7 @@ Interfacet till systemet är även förbättrat men är långt ifrån bra.
 11/5
 Wifi-modulen har varit en massiv huvudvärk då jag är tvungen att köra med hårdvaruseriekommunikation. Hoppningsvis ska allt fungera tills
 imorgon dock.
+
+15/5
+Crockpoten har anlänt, så mycket tid har gått åt till att testa temperaturinställningarna på den. Under tiden har jag städat till koden,
+så den är lite mer lättläslig och robust.
