@@ -27,13 +27,12 @@ enum token_id
 	T_VARIABLE,
 	
 	T_INTEGER,
+	T_STRING,
 	
 	T_END,
-	
-	NUM_OF_TOKENS,
 };
 
-enum var_type
+enum var_name
 {
 	V_NONE = 0,
 	
@@ -41,40 +40,56 @@ enum var_type
 	V_TIMER,
 	V_STATUS,
 	V_TARGET,
+	V_SSID,
+	V_PASSWORD,
+};
+
+union token_value
+{
+	int32_t num;
+	char *string;
 };
 
 struct token
 {
 	enum token_id id;
-	unsigned int value;
+	union token_value value;
 };
 
 struct variable
 {
-	int *addr;
+	void *addr;
 	char *symbol;
 	enum permission perm;
+	enum token_id type;
 	int min;
 	int max;
 };
 
 //function prototypes
 static bool is_number(const char *string);
-static enum var_type variable_type(const char *string);
+static enum var_name variable_type(const char *string);
 static bool eat(enum token_id tkn);
 static struct token get_token(const char *str);
 static struct token next_token(void);
 static void string_toupper(const char *s);
 
+static void expect_value(enum var_name name, char *result);
+static void set_variable(enum var_name name, union token_value val, char *result);
+static void get_variable(enum var_name name, char *result);
+
 static struct token current_tkn;
+static char token_string[20];
 
 static struct variable variables[] =
 {
 	[V_NONE]   = { 0 },
-	[V_TEMP]   = { &temperature,		"TEMP",	  P_R,  0, 0 		},
-	[V_TIMER]  = { &timer,				"TIMER",  P_RW, 0, INT_MAX	},
-	[V_STATUS] = { (int *)(&activated),	"STATUS", P_RW, false, true },
-	[V_TARGET] = { &target,		 		"TARGET", P_RW, 40,	80 		},
+	[V_TEMP]   = { &temperature, "TEMP", P_R,  T_INTEGER, 0, 0 },
+	[V_TIMER]  = { &timer, "TIMER", P_RW, T_INTEGER, 0, INT_MAX },
+	[V_STATUS] = { &activated,	"STATUS", P_RW, T_INTEGER, 0, 1 },
+	[V_TARGET] = { &target, "TARGET", P_RW, T_INTEGER, 40, 80 },
+	[V_SSID]   = { ssid, "SSID", P_RW, T_STRING, 0, 0, },
+	[V_PASSWORD] = { password, "PASSWORD", P_W, T_STRING, 0, 0 },
 };
 
 #define WRITABLE(V) 	(variables[V].perm & P_W)
@@ -83,7 +98,7 @@ static struct variable variables[] =
 
 static bool is_number(const char *string)
 {
-	char *strpos = string;
+	const char *strpos = string;
 	
 	if (*strpos == '\0') //empty string
 		return false;
@@ -95,7 +110,7 @@ static bool is_number(const char *string)
 	return true;
 }
 
-static enum var_type variable_type(const char *string)
+static enum var_name variable_type(const char *string)
 {
     int i = 0;
 
@@ -120,7 +135,7 @@ static bool eat(enum token_id tkn)
 
 static struct token get_token(const char *str)
 {
-	enum var_type var;
+	enum var_name var;
 	
 	// really ugly if-else chain
 	
@@ -132,6 +147,17 @@ static struct token get_token(const char *str)
 		
 	else if ((var = variable_type(str)) != NONE)
 		return (struct token) { T_VARIABLE, var };
+		
+	// string begins and ends with quotation marks
+	else if (str[0] == '"' && str[strlen(str) - 1] == '"')
+	{
+		//don't include first quotation mark
+		strcpy(token_string, str + 1);
+		
+		//remove trailing quotation mark
+		token_string[strlen(token_string) - 1] = '\0';
+		return (struct token) { T_STRING, {.string = token_string} };
+	}
 		
 	else if (!strcmp(str, "GET"))
 		return (struct token) { T_GET, 0 };
@@ -158,47 +184,77 @@ static void string_toupper(const char *s)
 	while(*(++strpos));
 }
 
+static void expect_value(enum var_name name, char *result)
+{
+	int type = variables[name].type; //expected type
+	eat(T_VARIABLE);
+	
+	if (current_tkn.id == type)
+		set_variable(name, current_tkn.value, result);
+	else
+		sprintf(result, "%s", "NOT A VARIABLE");
+}
+
+static void set_variable(enum var_name name, union token_value val, char *result)
+{
+	if (!WRITABLE(name))
+		sprintf(result, "%s", "NOT WRITABLE");
+		
+	else switch(variables[name].type)
+	{
+	case T_INTEGER:
+		if (INBOUNDS(name, val.num))
+		{
+			*(int32_t *)(variables[name].addr) = val.num;
+			sprintf(result, "%s", "OK");
+		}
+		else
+			sprintf(result, "%s", "OOB");
+		break;
+	case T_STRING:
+		strcpy(variables[name].addr, val.string);
+		sprintf(result, "%s", "OK");
+		break;
+	default:
+		sprintf(result, "%s", "UNVALID VALUE");
+		return;
+	}
+	
+}
+
+static void get_variable(enum var_name name, char *result)
+{
+	if (!READABLE(name))
+		sprintf(result, "%s", "NOT READABLE");
+
+	else switch(variables[name].type)
+	{
+	case T_INTEGER:
+		sprintf(result, "%d", *(int32_t *)variables[name].addr);
+		break;
+	case T_STRING:
+		sprintf(result, "%s", (char *)variables[name].addr);
+		break;
+	default:
+		sprintf(result, "%s", "UNVALID VALUE");
+	}
+}
+
 bool interpret(char *string, char *result)
 {
-	enum var_type var_val;
-	enum var_type int_val;
-	
+	struct token tkn;
 	string_toupper(string);
 		
 	current_tkn = get_token(strtok(string, " "));
 	
-	if (eat(T_GET))
-	{
-		var_val = current_tkn.value;
-		if (eat(T_VARIABLE))
-		{
-			sprintf(result, "%d", *(variables[var_val].addr));
-			return true;
-		}
-        else
-			sprintf(result, "%s", "VAR");
-	}
-	
-	else if (eat(T_SET))
-	{
-		var_val = current_tkn.value;
-		if (eat(T_VARIABLE) && WRITABLE(var_val))
-		{
-			int_val = current_tkn.value;
-			if (eat(T_INTEGER) && INBOUNDS(var_val, int_val))
-			{
-				*(variables[var_val].addr) = int_val;
-				sprintf(result, "%s", "OK");
-				return true;
-			}
-            else
-				sprintf(result, "%s", "INT");
-		}
-        else
-			sprintf(result, "%s", "VAR");
-	}
-	else
-		sprintf(result, "%s", "CMD");
+	if (eat(T_GET) && current_tkn.id == T_VARIABLE)
+		get_variable(current_tkn.value.num, result);
 
-	return false;
+	else if (eat(T_SET) && current_tkn.id == T_VARIABLE)
+		expect_value(current_tkn.value.num, result);
+
+	else
+		sprintf(result, "%s", "NOT A VALID COMMAND");
+		
+	return true;
 }

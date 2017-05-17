@@ -3,12 +3,15 @@
 #include <DallasTemperature.h>
 #include <OneWire.h>
 #include <RotaryEncoder.h>
+#include <EEPROM.h>
 
 #include "vars.h"
 #include "interpreter.h"
 
-#define TEMP_MAX 95
-#define TEMP_MIN 45
+#define TEMP_MAX     95
+#define TEMP_MIN     45
+#define TEMP_DEFAULT 83
+#define INTERVAL     0.5
 
 /* * * * * * * * * * *
  * Pin designations  *
@@ -65,15 +68,26 @@ enum time_unit
 };
 
 typedef void (*mode_func)(enum direction);
-typedef int fixed; //fixed point number, one decimal precision
 typedef void (*print_func)(int, int);
+typedef int (*rcv_func)(Stream &, char *);
+typedef void (*send_func)(Stream &, const char *);
+typedef int32_t fixed; //fixed point number, one decimal precision
 
+void interpret_stream(Stream &stream, rcv_func rcv, send_func snd);
+int rcv_wifi_data(Stream &stream, char *buffer);
+int rcv_bt_data(Stream &stream, char *buffer);
+void send_wifi_data(Stream &stream, const char *data);
+void send_bt_data(Stream &stream, const char *data);
+bool send_stream(Stream &from, Stream &to);
+void send_AT_cmd(Stream &s, const char *cmd, char *buffer);
+
+template<print_func f>
+void display_print(int32_t v, int col, int row);
+template <enum time_unit n>
+void print_time(int col, int row, int val);
 void print_timer(int col, int row);
 void print_target(int col, int row);
 void print_temperature(int col, int row, float temp);
-
-template<typename T, print_func f>
-void display_print(T &v, int col, int row);
 
 void cw_event(void);
 void ccw_event(void);
@@ -83,10 +97,6 @@ void init_timer(void);
 void update_temperature(void);
 void pci_setup(byte pin);
 void update_display(void);
-
-int rcv_wifi_data(Stream &stream, char *buffer);
-void send_wifi_data(Stream &stream, const char *data);
-bool send_stream(Stream &from, Stream &to);
 
 void change_target(enum direction d);
 void change_status(enum direction d);
@@ -104,15 +114,17 @@ mode_func modes[] =
   change_seconds,
   change_status,
 };
-int current_mode = 0;
+int current_mode;
 
 // cooker properties
-int target = TEMP_MIN; // desired temperature
-const float interval = 0.5; //temperature interval
-uint32_t timer = 0; //countdown measured in seconds
+int32_t target = TEMP_DEFAULT; // desired temperature
+const float interval = INTERVAL; //temperature interval
+int32_t timer; //countdown measured in seconds
 fixed temperature;
-bool activated = false;
-
+int32_t activated = false;
+char ssid[20];
+char password[20];
+ 
 LiquidCrystal lcd(RS, RW, ENABLE, DB4, DB5, DB6, DB7);
 RotaryEncoder enc(D1, D2, SWITCH, cw_event, ccw_event, btn_event);
 OneWire tempWire(ONEWIRE);
@@ -130,10 +142,8 @@ void print_time(int col, int row, int val)
     old = val;
     sprintf(num_string, "%02d", val);
     
-    noInterrupts();
     lcd.setCursor(col, row);
     lcd.print(num_string);
-    interrupts();
   }
 }
 
@@ -158,24 +168,21 @@ void print_timer(int col, int row)
 
 void print_target(int col, int row)
 {
-  noInterrupts();
   lcd.setCursor(col, row);
   lcd.print("  "); //erase previous entry
   lcd.setCursor(col, row);
   lcd.print(target);
-  interrupts();
 }
 
 void print_temperature(int col, int row)
 {
   char str[5];
   //format "xx.x" degrees
-  sprintf(str, "%02d%c%d", temperature / 10, '.', temperature % 10);
+  int t = temperature; //sprintf doesn't take kindly to int32_t
+  sprintf(str, "%02d.%d", t / 10, t % 10);
   
-  noInterrupts();
   lcd.setCursor(col, row);
   lcd.print(str);
-  interrupts();
 }
 
 void cw_event(void)
@@ -214,9 +221,8 @@ void init_timer(void)
 
 void update_temperature(void)
 {
-  volatile float t = sensors.getTempCByIndex(0);
-  temperature = t * 10;
-  Serial.println(temperature);
+  float t = sensors.getTempCByIndex(0);
+  temperature = t * 10; //times 10 because we have 1 decimal precision
 
   if (!activated)
     digitalWrite(RELAY, LOW);
@@ -244,39 +250,10 @@ void pci_setup(byte pin)
   PCICR  |= bit (digitalPinToPCICRbit(pin)); // enable interrupt for the group
 }
 
-void wifi_command(SoftwareSerial &wifi)
+template<print_func f>
+void display_print(int32_t v, int col, int row)
 {
-  char input_buffer[100];
-  char result_buffer[10];
-  int pos = 0;
-
-  wifi.listen();
-
-  while (wifi.available())
-  {
-    input_buffer[pos++] = wifi.read();
-    delay(1);
-  }
-
-  if (!pos) //no command input
-    return;
-
-  input_buffer[pos] = '\0';
-
-  Serial.println(input_buffer);
-  interpret(input_buffer, result_buffer);
-
-  wifi.print("AT+CIPSEND=0,");
-  wifi.print(strlen(result_buffer));
-  wifi.print("\r\n");
-  delay(1000);
-  wifi.print(result_buffer);
-}
-
-template<typename T, print_func f>
-void display_print(T &v, int col, int row)
-{
-  static int old = 0;
+  static int32_t old = 0;
 
   // only update display if the content has changed
   if(v != old)
@@ -288,21 +265,12 @@ void display_print(T &v, int col, int row)
 
 void update_display(void)
 {  
-  static int temp_old = 0;
-  static int target_old = 0;
-  static int timer_old = 0;
+  display_print<print_temperature>(temperature, TEMP_X, TEMP_Y);
+  display_print<print_target>(target, TARGET_X, TARGET_Y);
+  display_print<print_timer>(timer, TIMER_X, TIMER_Y);
 
-  display_print<int, print_temperature>
-    (temperature, TEMP_X, TEMP_Y);
-  display_print<int, print_target>
-    (target, TARGET_X, TARGET_Y);
-  display_print<uint32_t, print_timer>
-    (timer, TIMER_X, TIMER_Y);
-
-  noInterrupts();
   lcd.setCursor(15, 0);
   lcd.print(current_mode);
-  interrupts();
 }
 
 void change_target(enum direction d)
@@ -350,6 +318,31 @@ void change_seconds(enum direction d)
     timer--;
 }
 
+void read_array_eeprom(char *buffer, int length, int addr)
+{
+  int i;
+  for (i = 0; i < length; i++)
+    buffer[i] = EEPROM.read(addr + i);
+}
+
+template<char *buffer, int length>
+void write_array_eeprom(int addr)
+{
+  int i;
+  static bool written = false;
+  static char old_buffer[length];
+  
+  for (i = 0; i < length; i++)
+    // only update new values if we've written before
+    if (!written || buffer[i] != old_buffer[i])
+    {
+      EEPROM.write(addr + i, buffer[i]);
+      old_buffer[i] = buffer[i];
+    }
+    
+   written = true;
+}
+
 void setup(void)
 {
   sensors.begin();
@@ -379,12 +372,54 @@ void setup(void)
   //do not block while reading data from sensor
   sensors.setWaitForConversion(false);
 
-  send_AT_cmd(Serial, "UART_DEF=9600,8,1,0,0", NULL);
-  send_AT_cmd(Serial, "CIPMUX=1", NULL);
-  send_AT_cmd(Serial, "CIPSERVER=1,9001", NULL);
-  send_wifi_data(Serial, "ping");
+  //send_AT_cmd(Serial, "UART_DEF=9600,8,1,0,0", NULL);
+  //send_AT_cmd(Serial, "CIPMUX=1", NULL);
+  //send_AT_cmd(Serial, "CIPSERVER=1,9001", NULL);
+  //send_wifi_data(Serial, "ping");
 
-  send_stream(Serial, BT);
+  char buffer[50];
+  read_array_eeprom(ssid, SSID_LEN, 0);
+  read_array_eeprom(password, PW_LEN, SSID_LEN);
+  sprintf(buffer, "CWJAP=\"%s\",\"%s\"", ssid, password);
+  send_AT_cmd(Serial, buffer, NULL);
+  //send_stream(Serial, BT);
+}
+
+void interpret_stream(Stream &stream, rcv_func rcv, send_func snd)
+{
+  char in_buffer[30], out_buffer[30];
+  if (rcv(stream, in_buffer))
+  {
+    interpret(in_buffer, out_buffer);
+    write_array_eeprom<ssid, SSID_LEN>(0);
+    write_array_eeprom<password, PW_LEN>(SSID_LEN);
+    snd(stream, out_buffer);
+  }
+}
+
+int rcv_bt_data(Stream &stream, char *buffer)
+{
+  int length = 0;
+  
+  while (stream.available())
+  {
+    buffer[length++] = stream.read();
+    delay(1);
+  }
+  
+  buffer[length] = '\0';
+  
+  return length;
+}
+
+void send_bt_data(Stream &stream, const char *data)
+{
+  int i;
+  
+  for (i = 0; data[i]; i++)
+    stream.write(data[i]);
+  
+  stream.print("\r\n");
 }
 
 int rcv_wifi_data(Stream &stream, char *buffer)
@@ -415,6 +450,17 @@ int rcv_wifi_data(Stream &stream, char *buffer)
   return length;
 }
 
+void send_wifi_data(Stream &stream, const char *data)
+{
+  stream.print("AT+CIPSEND=0,");
+  stream.print(strlen(data) + 2);
+  stream.print("\r\n");
+  delay(AT_DELAY);
+  stream.print(data);
+  stream.print("\r\n");
+  delay(AT_DELAY);
+}
+
 // send data from one stream to another stream
 bool send_stream(Stream &from, Stream &to)
 {
@@ -428,17 +474,6 @@ bool send_stream(Stream &from, Stream &to)
   }
 
   return true;
-}
-
-void send_wifi_data(Stream &stream, const char *data)
-{
-  stream.print("AT+CIPSEND=0,");
-  stream.print(strlen(data) + 2);
-  stream.print("\r\n");
-  delay(AT_DELAY);
-  stream.print(data);
-  stream.print("\r\n");
-  delay(AT_DELAY);
 }
 
 void send_AT_cmd(Stream &s, const char *cmd, char *buffer)
@@ -460,19 +495,20 @@ void send_AT_cmd(Stream &s, const char *cmd, char *buffer)
 
 void update_IO(void)
 {
-  char buffer[30], result[10];
-
-  if (send_stream(BT, Serial))
+  /*if (send_stream(BT, Serial))
   {
     delay(AT_DELAY);
-    send_stream(Serial, BT);
+    //send_stream(Serial, BT);
   }
-
-  if (rcv_wifi_data(Serial, buffer))
+  else if (send_stream(Serial, BT))
   {
-    interpret(buffer, result);
-    send_wifi_data(Serial, result);
-  }
+    delay(AT_DELAY);
+    send_stream(BT, Serial);
+  }*/
+  
+  //interpret_stream(Serial, rcv_wifi_data, send_wifi_data);
+  
+  interpret_stream(BT, rcv_bt_data, send_bt_data);
 }
 
 void update_tick(void)

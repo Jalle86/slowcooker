@@ -3,9 +3,14 @@
 
 #include <stdint.h>
 
-extern int temperature;
-extern int target;
-extern uint32_t timer;
-extern bool activated;
+#define SSID_LEN 20
+#define PW_LEN 20
+
+extern int32_t temperature;
+extern int32_t target;
+extern int32_t timer;
+extern int32_t activated;
+extern char ssid[SSID_LEN];
+extern char password[PW_LEN];
 
 #endif
