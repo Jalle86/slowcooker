@@ -41,3 +41,7 @@ imorgon dock.
 15/5
 Crockpoten har anlänt, så mycket tid har gått åt till att testa temperaturinställningarna på den. Under tiden har jag städat till koden,
 så den är lite mer lättläslig och robust.
+
+17/5
+Har stökat om i tolken så att den även kan acceptera strängar. Det är möjligt att ställa in ssid + lösenord för wifi,
+vilket lagras i EEPROM.

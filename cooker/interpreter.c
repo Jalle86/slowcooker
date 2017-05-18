@@ -27,6 +27,7 @@ enum token_id
 	T_VARIABLE,
 	
 	T_INTEGER,
+	T_FIXED,
 	T_STRING,
 	
 	T_END,
@@ -42,6 +43,7 @@ enum var_name
 	V_TARGET,
 	V_SSID,
 	V_PASSWORD,
+	V_IP,
 };
 
 union token_value
@@ -67,7 +69,7 @@ struct variable
 };
 
 //function prototypes
-static bool is_number(const char *string);
+static bool is_integer(const char *string);
 static enum var_name variable_type(const char *string);
 static bool eat(enum token_id tkn);
 static struct token get_token(const char *str);
@@ -84,19 +86,20 @@ static char token_string[20];
 static struct variable variables[] =
 {
 	[V_NONE]   = { 0 },
-	[V_TEMP]   = { &temperature, "TEMP", P_R,  T_INTEGER, 0, 0 },
+	[V_TEMP]   = { &temperature, "TEMP", P_R,  T_FIXED, 0, 0 },
 	[V_TIMER]  = { &timer, "TIMER", P_RW, T_INTEGER, 0, INT_MAX },
 	[V_STATUS] = { &activated,	"STATUS", P_RW, T_INTEGER, 0, 1 },
 	[V_TARGET] = { &target, "TARGET", P_RW, T_INTEGER, 40, 80 },
 	[V_SSID]   = { ssid, "SSID", P_RW, T_STRING, 0, 0, },
 	[V_PASSWORD] = { password, "PASSWORD", P_W, T_STRING, 0, 0 },
+	[V_IP] = { esp_ip, "IP", P_R, T_STRING, 0, 0 },
 };
 
 #define WRITABLE(V) 	(variables[V].perm & P_W)
 #define READABLE(V) 	(variables[V].perm & P_R)
 #define INBOUNDS(V, N) 	(((N) >= variables[V].min) && ((N) <= variables[V].max))
 
-static bool is_number(const char *string)
+static bool is_integer(const char *string)
 {
 	const char *strpos = string;
 	
@@ -108,6 +111,31 @@ static bool is_number(const char *string)
 			return false;
 			
 	return true;
+}
+
+static bool is_fixed(const char *string)
+{
+	char *p = strchr(string, '.');
+	if (p)
+	{
+		*p++ = '\0'; //replace character with end of string
+		
+		bool ret = is_integer(string) && is_integer(p) && strlen(p) == 1;
+		*(--p) = '.';
+		return ret;
+	}
+	else
+		return false;
+}
+
+static int get_fixed(const char *string)
+{
+	char *p = strchr(string, '.');
+	*p++ = '\0';
+	int ret = 10 * strtol(string, NULL, 10) + strtol(p, NULL, 10);
+	*(--p) = '.';
+	
+	return ret;
 }
 
 static enum var_name variable_type(const char *string)
@@ -142,13 +170,16 @@ static struct token get_token(const char *str)
 	if (str == NULL)
 		return (struct token) { T_END, 0 };
 		
-	else if (is_number(str))
+	else if (is_integer(str))
 		return (struct token) { T_INTEGER, strtol(str, NULL, 10) };
+	
+	else if (is_fixed(str))
+		return (struct token) { T_FIXED, get_fixed(str) };
 		
 	else if ((var = variable_type(str)) != NONE)
 		return (struct token) { T_VARIABLE, var };
 		
-	// string begins and ends with quotation marks
+	// a string begins and ends with quotation marks
 	else if (str[0] == '"' && str[strlen(str) - 1] == '"')
 	{
 		//don't include first quotation mark
@@ -203,6 +234,7 @@ static void set_variable(enum var_name name, union token_value val, char *result
 	else switch(variables[name].type)
 	{
 	case T_INTEGER:
+	case T_FIXED:
 		if (INBOUNDS(name, val.num))
 		{
 			*(int32_t *)(variables[name].addr) = val.num;
@@ -224,6 +256,7 @@ static void set_variable(enum var_name name, union token_value val, char *result
 
 static void get_variable(enum var_name name, char *result)
 {
+	int num;
 	if (!READABLE(name))
 		sprintf(result, "%s", "NOT READABLE");
 
@@ -235,6 +268,10 @@ static void get_variable(enum var_name name, char *result)
 	case T_STRING:
 		sprintf(result, "%s", (char *)variables[name].addr);
 		break;
+	case T_FIXED:
+		num = *(int *)variables[name].addr;
+		sprintf(result, "%d.%d", num / 10, num % 10);
+		break;
 	default:
 		sprintf(result, "%s", "UNVALID VALUE");
 	}
@@ -243,7 +280,6 @@ static void get_variable(enum var_name name, char *result)
 bool interpret(char *string, char *result)
 {
 	struct token tkn;
-	string_toupper(string);
 		
 	current_tkn = get_token(strtok(string, " "));
 	

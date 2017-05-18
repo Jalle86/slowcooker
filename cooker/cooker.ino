@@ -8,10 +8,14 @@
 #include "vars.h"
 #include "interpreter.h"
 
+#define WIFI_ENABLED
+
 #define TEMP_MAX     95
 #define TEMP_MIN     45
 #define TEMP_DEFAULT 83
 #define INTERVAL     0.5
+#define TEMP_PERIOD  20
+#define AUTH_TIMEOUT 60
 
 /* * * * * * * * * * *
  * Pin designations  *
@@ -73,13 +77,17 @@ typedef int (*rcv_func)(Stream &, char *);
 typedef void (*send_func)(Stream &, const char *);
 typedef int32_t fixed; //fixed point number, one decimal precision
 
-void interpret_stream(Stream &stream, rcv_func rcv, send_func snd);
+int freeRam(void);
+
+bool interpret_stream(Stream &stream, rcv_func rcv, send_func snd);
+int rcv_wifi_data_ip(Stream &stream, char *buffer, char ip[4]);
 int rcv_wifi_data(Stream &stream, char *buffer);
 int rcv_bt_data(Stream &stream, char *buffer);
 void send_wifi_data(Stream &stream, const char *data);
 void send_bt_data(Stream &stream, const char *data);
 bool send_stream(Stream &from, Stream &to);
 void send_AT_cmd(Stream &s, const char *cmd, char *buffer);
+bool get_authentication(Stream &stream);
 
 template<print_func f>
 void display_print(int32_t v, int col, int row);
@@ -116,21 +124,36 @@ mode_func modes[] =
 };
 int current_mode;
 
+// IP address of WIFI-module, represented as a string for ease of use with interpreter 
+char esp_ip[16];
+
+bool authenticated;
+const char *auth_phrase = "1234567890";
+int auth_timer;
+char auth_ip[4];
+
 // cooker properties
 int32_t target = TEMP_DEFAULT; // desired temperature
 const float interval = INTERVAL; //temperature interval
 int32_t timer; //countdown measured in seconds
 fixed temperature;
-int32_t activated = false;
-char ssid[20];
-char password[20];
- 
+int32_t activated;
+char ssid[SSID_LEN];
+char password[PW_LEN];
+
 LiquidCrystal lcd(RS, RW, ENABLE, DB4, DB5, DB6, DB7);
 RotaryEncoder enc(D1, D2, SWITCH, cw_event, ccw_event, btn_event);
 OneWire tempWire(ONEWIRE);
 DallasTemperature sensors(&tempWire);
 SoftwareSerial BT(BT_RX, BT_TX, false);
 
+int freeRam(void) 
+{
+  extern int __heap_start, *__brkval; 
+  int v; 
+  return (int) &v - (__brkval == 0 ? (int) &__heap_start : (int) __brkval); 
+}
+    
 template <enum time_unit n>
 void print_time(int col, int row, int val)
 {
@@ -326,25 +349,33 @@ void read_array_eeprom(char *buffer, int length, int addr)
 }
 
 template<char *buffer, int length>
-void write_array_eeprom(int addr)
+void update_array_eeprom(int addr)
 {
   int i;
   static bool written = false;
   static char old_buffer[length];
   
+  if (!written)
+  {
+    read_array_eeprom(old_buffer, length, addr);
+    written = true;
+  }
+  
   for (i = 0; i < length; i++)
-    // only update new values if we've written before
-    if (!written || buffer[i] != old_buffer[i])
+    // only update new values to eeprom, to avoid wear and tear
+    if (buffer[i] != old_buffer[i])
     {
       EEPROM.write(addr + i, buffer[i]);
       old_buffer[i] = buffer[i];
     }
-    
-   written = true;
 }
 
 void setup(void)
 {
+  char buffer[100];
+  buffer[0] = 0;
+  char *strpos;
+  
   sensors.begin();
   enc.begin();
   Serial.begin(9600);
@@ -372,29 +403,50 @@ void setup(void)
   //do not block while reading data from sensor
   sensors.setWaitForConversion(false);
 
-  //send_AT_cmd(Serial, "UART_DEF=9600,8,1,0,0", NULL);
-  //send_AT_cmd(Serial, "CIPMUX=1", NULL);
-  //send_AT_cmd(Serial, "CIPSERVER=1,9001", NULL);
-  //send_wifi_data(Serial, "ping");
+  #ifdef WIFI_ENABLED
+  //allow multiple connections
+  send_AT_cmd(Serial, "+CIPMUX=1", NULL);
+  // create server
+  send_AT_cmd(Serial, "+CIPSERVER=1,9001", NULL);
+  // show ip on received messages
+  send_AT_cmd(Serial, "+CIPDINFO=1", NULL);
+  
+  // get local ip address
+  send_AT_cmd(Serial, "+CIFSR", buffer);
+  if (strpos = strstr(buffer, "STAIP,"))
+  {
+    int i = 0;
+    strpos+=7; //go to beginning of ip address
+    for (i = 0; *(strpos + i) != '"'; i++)
+      esp_ip[i] = *(strpos + i);
+    esp_ip[i] = '\0';
+  }
 
-  char buffer[50];
   read_array_eeprom(ssid, SSID_LEN, 0);
   read_array_eeprom(password, PW_LEN, SSID_LEN);
-  sprintf(buffer, "CWJAP=\"%s\",\"%s\"", ssid, password);
-  send_AT_cmd(Serial, buffer, NULL);
-  //send_stream(Serial, BT);
+  
+  #endif // WIFI_ENABLED
+  
+  // connect to AP
+  //sprintf(buffer, "+CWJAP=\"%s\",\"%s\"", ssid, password);
+  //send_AT_cmd(Serial, buffer, NULL);
+  //send_wifi_data(Serial, "ping");
 }
 
-void interpret_stream(Stream &stream, rcv_func rcv, send_func snd)
+bool interpret_stream(Stream &stream, rcv_func rcv, send_func snd)
 {
   char in_buffer[30], out_buffer[30];
   if (rcv(stream, in_buffer))
-  {
+  {    
     interpret(in_buffer, out_buffer);
-    write_array_eeprom<ssid, SSID_LEN>(0);
-    write_array_eeprom<password, PW_LEN>(SSID_LEN);
+    update_array_eeprom<ssid, SSID_LEN>(0);
+    update_array_eeprom<password, PW_LEN>(SSID_LEN);
     snd(stream, out_buffer);
+    
+    return true;
   }
+  else
+    return false;
 }
 
 int rcv_bt_data(Stream &stream, char *buffer)
@@ -424,7 +476,12 @@ void send_bt_data(Stream &stream, const char *data)
 
 int rcv_wifi_data(Stream &stream, char *buffer)
 {
-  int i = 0;
+  rcv_wifi_data_ip(stream, buffer, NULL);
+}
+
+int rcv_wifi_data_ip(Stream &stream, char *buffer, char ip[4])
+{
+  int i = 0, j;
   int length = 0;
   char nums[5];
 
@@ -435,16 +492,33 @@ int rcv_wifi_data(Stream &stream, char *buffer)
       return 0;
 
     // find length of data,
-    while(nums[i] = stream.read(), nums[i++] != ':');
+    // assuming AT+CIPDINFO=1
+    while(nums[i] = stream.read(), nums[i++] != ',');
 
     nums[i] = '\0';
     length = strtol(nums, NULL, 10);
 
+    if (ip)
+      for(j = 0, i = 0; j < 4; i++)
+      {
+        nums[i] = stream.read();
+        if (nums[i] == '.' || nums[i] == ',')
+        {
+          nums[i] = '\0';
+          ip[j++] = strtol(nums, NULL, 10);
+          i = 0;
+        }
+      }
+
+    stream.find(":"); //beginning of data
     for (i = 0; i < length; i++)
       buffer[i] = stream.read();
 
     while(stream.available()) //empty input buffer
       stream.read();
+      
+    buffer[length] = 0;
+    BT.println(buffer);
   }
 
   return length;
@@ -480,34 +554,62 @@ void send_AT_cmd(Stream &s, const char *cmd, char *buffer)
 {
   int i = 0;
   
-  s.print("AT+");
+  s.print("AT");
   s.print(cmd);
   s.print("\r\n");
   delay(AT_DELAY);
   
   if (buffer)
+  {
     for (i = 0; s.available(); i++)
       buffer[i] = s.read();
+    buffer[i] = '\0';
+  }
   else
     while(s.available())
       s.read();
 }
 
-void update_IO(void)
+bool get_authentication(Stream &stream)
 {
+  int i;
+  char buffer[20];
+  char ip[4];
+  
+  if (rcv_wifi_data_ip(stream, buffer, ip))
+  {
+    if (!strcmp(buffer, auth_phrase))
+    {
+      send_wifi_data(stream, "Authenticated");
+      for(i = 0; i < 4; i++)
+        auth_ip[i] = ip[i];
+        
+      return true;
+    }
+    else
+    {
+      send_wifi_data(stream, "Authentication failed");
+      return false;
+    }
+  }
+}
+
+void update_IO(void)
+{  
+  if (authenticated)
+  {
+    if (interpret_stream(Serial, rcv_wifi_data, send_wifi_data))
+      auth_timer = 0;
+  }
+  else
+    authenticated = get_authentication(Serial);
+  
   /*if (send_stream(BT, Serial))
   {
     delay(AT_DELAY);
-    //send_stream(Serial, BT);
-  }
-  else if (send_stream(Serial, BT))
-  {
-    delay(AT_DELAY);
-    send_stream(BT, Serial);
+    send_stream(Serial, BT);
   }*/
-  
-  //interpret_stream(Serial, rcv_wifi_data, send_wifi_data);
-  
+    
   interpret_stream(BT, rcv_bt_data, send_bt_data);
 }
 
@@ -518,6 +620,12 @@ void update_tick(void)
   if (activated)
     --timer > 0 ? timer : 0;
 
+  if (authenticated && ++auth_timer == AUTH_TIMEOUT)
+  {
+    authenticated = false;
+    auth_timer = 0;
+  }
+  
   switch(temperature_timer++)
   {
   case 0:
@@ -529,7 +637,7 @@ void update_tick(void)
     update_temperature();
     break;
 
-  case 10:
+  case TEMP_PERIOD:
     temperature_timer = 0;
     break;
   }

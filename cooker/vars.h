@@ -10,6 +10,8 @@ extern int32_t temperature;
 extern int32_t target;
 extern int32_t timer;
 extern int32_t activated;
+
+extern char esp_ip[16];
 extern char ssid[SSID_LEN];
 extern char password[PW_LEN];
 
