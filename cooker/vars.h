@@ -6,6 +6,9 @@
 #define SSID_LEN 20
 #define PW_LEN 20
 
+#define TEMP_MAX     95
+#define TEMP_MIN     0
+
 extern int32_t temperature;
 extern int32_t target;
 extern int32_t timer;

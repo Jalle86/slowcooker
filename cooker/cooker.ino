@@ -8,14 +8,13 @@
 #include "vars.h"
 #include "interpreter.h"
 
-#define WIFI_ENABLED
+//#define WIFI_ENABLED
+#define DEBUG_ENABLED
 
-#define TEMP_MAX     95
-#define TEMP_MIN     45
-#define TEMP_DEFAULT 83
-#define INTERVAL     0.5
+#define TEMP_DEFAULT 50
+#define INTERVAL     5
 #define TEMP_PERIOD  20
-#define AUTH_TIMEOUT 60
+#define AUTH_TIMEOUT 600
 
 /* * * * * * * * * * *
  * Pin designations  *
@@ -26,9 +25,9 @@
 #define DB5      4
 #define DB6      3
 #define DB7      2
-#define RS       6
+#define RS       8
 #define RW       7
-#define ENABLE   8
+#define ENABLE   6
 
 // rotary encoder
 #define D1      11
@@ -79,13 +78,17 @@ typedef int32_t fixed; //fixed point number, one decimal precision
 
 int freeRam(void);
 
+bool interpret_stream_auth(Stream &stream);
 bool interpret_stream(Stream &stream, rcv_func rcv, send_func snd);
+
 int rcv_wifi_data_ip(Stream &stream, char *buffer, char ip[4]);
 int rcv_wifi_data(Stream &stream, char *buffer);
-int rcv_bt_data(Stream &stream, char *buffer);
 void send_wifi_data(Stream &stream, const char *data);
+
+int rcv_bt_data(Stream &stream, char *buffer);
 void send_bt_data(Stream &stream, const char *data);
-bool send_stream(Stream &from, Stream &to);
+
+bool stream_pipeline(Stream &from, Stream &to);
 void send_AT_cmd(Stream &s, const char *cmd, char *buffer);
 bool get_authentication(Stream &stream);
 
@@ -125,7 +128,7 @@ mode_func modes[] =
 int current_mode;
 
 // IP address of WIFI-module, represented as a string for ease of use with interpreter 
-char esp_ip[16];
+char esp_ip[16] = { "0.0.0.0" };
 
 bool authenticated;
 const char *auth_phrase = "1234567890";
@@ -134,7 +137,7 @@ char auth_ip[4];
 
 // cooker properties
 int32_t target = TEMP_DEFAULT; // desired temperature
-const float interval = INTERVAL; //temperature interval
+const fixed interval = INTERVAL; //temperature interval
 int32_t timer; //countdown measured in seconds
 fixed temperature;
 int32_t activated;
@@ -247,12 +250,10 @@ void update_temperature(void)
   float t = sensors.getTempCByIndex(0);
   temperature = t * 10; //times 10 because we have 1 decimal precision
 
-  if (!activated)
-    digitalWrite(RELAY, LOW);
-  else if (t < target - interval)
-    digitalWrite(RELAY, HIGH);
-  else if (t > target + interval)
-    digitalWrite(RELAY, LOW);
+  #ifdef DEBUG_ENABLED
+  Serial.println(temperature);
+  auth_timer = 0;
+  #endif // DEBUG_ENABLED
 }
 
 SIGNAL(TIMER1_COMPA_vect)
@@ -406,10 +407,12 @@ void setup(void)
   #ifdef WIFI_ENABLED
   //allow multiple connections
   send_AT_cmd(Serial, "+CIPMUX=1", NULL);
-  // create server
-  send_AT_cmd(Serial, "+CIPSERVER=1,9001", NULL);
+  //set server timeout to 600 seconds
+  send_AT_cmd(Serial, "+CIPSTO=600", NULL);
   // show ip on received messages
   send_AT_cmd(Serial, "+CIPDINFO=1", NULL);
+  // create server
+  send_AT_cmd(Serial, "+CIPSERVER=1,9001", NULL);
   
   // get local ip address
   send_AT_cmd(Serial, "+CIFSR", buffer);
@@ -431,6 +434,32 @@ void setup(void)
   //sprintf(buffer, "+CWJAP=\"%s\",\"%s\"", ssid, password);
   //send_AT_cmd(Serial, buffer, NULL);
   //send_wifi_data(Serial, "ping");
+}
+bool interpret_stream_auth(Stream &stream)
+{
+  char buffer[50], buffer_out[20];
+  char ip[4];
+  bool same_ip;
+  int i;
+  
+  if (authenticated && rcv_wifi_data_ip(stream, buffer, ip))
+  {
+    same_ip = true;
+    for (i = 0; i < 4; i++)
+      same_ip &= (ip[i] == auth_ip[i]);
+      
+    if (same_ip)
+    {
+      interpret(buffer, buffer_out);
+      auth_timer = 0;
+    }
+    else
+      sprintf(buffer_out, "%s", "Not authenticated");
+      
+    send_wifi_data(stream, buffer_out);
+  }
+  else if (!authenticated)
+    authenticated = get_authentication(stream);
 }
 
 bool interpret_stream(Stream &stream, rcv_func rcv, send_func snd)
@@ -479,6 +508,7 @@ int rcv_wifi_data(Stream &stream, char *buffer)
   rcv_wifi_data_ip(stream, buffer, NULL);
 }
 
+// Receive data from ESP-01 module.
 int rcv_wifi_data_ip(Stream &stream, char *buffer, char ip[4])
 {
   int i = 0, j;
@@ -493,16 +523,18 @@ int rcv_wifi_data_ip(Stream &stream, char *buffer, char ip[4])
 
     // find length of data,
     // assuming AT+CIPDINFO=1
-    while(nums[i] = stream.read(), nums[i++] != ',');
+    do
+      nums[i] = stream.read();
+      while (nums[i++] != ',');
 
-    nums[i] = '\0';
+    nums[i] = '\0'; //append end of string
     length = strtol(nums, NULL, 10);
 
     if (ip)
       for(j = 0, i = 0; j < 4; i++)
       {
         nums[i] = stream.read();
-        if (nums[i] == '.' || nums[i] == ',')
+        if (nums[i] == '.' || nums[i] == ',') //end of IP byte
         {
           nums[i] = '\0';
           ip[j++] = strtol(nums, NULL, 10);
@@ -535,8 +567,8 @@ void send_wifi_data(Stream &stream, const char *data)
   delay(AT_DELAY);
 }
 
-// send data from one stream to another stream
-bool send_stream(Stream &from, Stream &to)
+// pipeline the output of one stream to the input of the other.
+bool stream_pipeline(Stream &from, Stream &to)
 {
   if (!from.available())
     return false;
@@ -559,21 +591,24 @@ void send_AT_cmd(Stream &s, const char *cmd, char *buffer)
   s.print("\r\n");
   delay(AT_DELAY);
   
+  // return answer to AT command
   if (buffer)
   {
     for (i = 0; s.available(); i++)
       buffer[i] = s.read();
     buffer[i] = '\0';
   }
-  else
+  else // no output buffer provided, empty stream buffer
     while(s.available())
       s.read();
 }
 
+// read data from ESP-01 module, and return whether the correct
+// authorization phrase has been entered.
 bool get_authentication(Stream &stream)
 {
   int i;
-  char buffer[20];
+  char buffer[50];
   char ip[4];
   
   if (rcv_wifi_data_ip(stream, buffer, ip))
@@ -583,7 +618,8 @@ bool get_authentication(Stream &stream)
       send_wifi_data(stream, "Authenticated");
       for(i = 0; i < 4; i++)
         auth_ip[i] = ip[i];
-        
+      
+      auth_timer = 0;
       return true;
     }
     else
@@ -595,19 +631,15 @@ bool get_authentication(Stream &stream)
 }
 
 void update_IO(void)
-{  
-  if (authenticated)
-  {
-    if (interpret_stream(Serial, rcv_wifi_data, send_wifi_data))
-      auth_timer = 0;
-  }
-  else
-    authenticated = get_authentication(Serial);
+{
+  #ifdef WIFI_ENABLED
+  interpret_stream_auth(Serial);
+  #endif //WIFI_ENABLED
   
-  /*if (send_stream(BT, Serial))
+  /*if (stream_pipeline(BT, Serial))
   {
     delay(AT_DELAY);
-    send_stream(Serial, BT);
+    stream_pipeline(Serial, BT);
   }*/
     
   interpret_stream(BT, rcv_bt_data, send_bt_data);
@@ -620,12 +652,14 @@ void update_tick(void)
   if (activated)
     --timer > 0 ? timer : 0;
 
+  #ifdef WIFI_ENABLED
   if (authenticated && ++auth_timer == AUTH_TIMEOUT)
   {
     authenticated = false;
     auth_timer = 0;
+    send_wifi_data(Serial, "Authentication timed out.");
   }
-  
+  #endif //WIFI_ENABLED
   switch(temperature_timer++)
   {
   case 0:
@@ -658,5 +692,12 @@ void loop(void)
 
   update_display();
   digitalWrite(LED, activated);
+  
+  if (!activated)
+    digitalWrite(RELAY, LOW);
+  else if (temperature < 10 * target - interval)
+    digitalWrite(RELAY, HIGH);
+  else if (temperature > 10 * target + interval)
+    digitalWrite(RELAY, LOW);
 }
 
