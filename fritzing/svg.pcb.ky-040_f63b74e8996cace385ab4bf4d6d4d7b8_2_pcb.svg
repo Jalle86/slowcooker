@@ -1,0 +1,199 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<!-- Created with Fritzing (http://www.fritzing.org/) -->
+<svg xmlns="http://www.w3.org/2000/svg" gorn="0"  height="0.8in" id="svg4135" version="1.2" width="0.8in" viewBox="0 0 57.6 57.6" x="0in" y="0in">
+    <desc >
+        <referenceFile >ky040_pcb.svg</referenceFile>
+    </desc>
+    <metadata  id="metadata4348">
+        <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+            <cc:Work xmlns:cc="http://creativecommons.org/ns#" rdf:about="" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+                <dc:format xmlns:dc="http://purl.org/dc/elements/1.1/">image/svg+xml</dc:format>
+                <dc:type xmlns:dc="http://purl.org/dc/elements/1.1/" rdf:resource="http://purl.org/dc/dcmitype/StillImage" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"/>
+                <dc:title xmlns:dc="http://purl.org/dc/elements/1.1/"/>
+            </cc:Work>
+        </rdf:RDF>
+    </metadata>
+    <defs  id="defs4346"/>
+    <g  transform="translate(7.322034,-7.8101696)">
+        <g >
+            <g >
+                <g gorn="0.3.0.0.0"  id="g4137" partID="854125330">
+                    <g gorn="0.3.0.0.0.0"  id="copper0" stroke-width="0">
+                        <circle gorn="0.3.0.0.0.0.0"  id="circle4140" fill="none" cx="7.1999998" cy="54" r="2.052" stroke-width="1.22399998" connectorname="SS" stroke="#f7bd13"/>
+                        <circle gorn="0.3.0.0.0.0.1"  id="circle4142" fill="none" cx="14.4" cy="54" r="2.052" stroke-width="1.22399998" connectorname="MOSI" stroke="#f7bd13"/>
+                        <circle gorn="0.3.0.0.0.0.2"  id="circle4144" fill="none" cx="21.6" cy="54" r="2.052" stroke-width="1.22399998" connectorname="MISO" stroke="#f7bd13"/>
+                        <circle gorn="0.3.0.0.0.0.3"  id="circle4146" fill="none" cx="28.799999" cy="54" r="2.052" stroke-width="1.22399998" connectorname="SCLK" stroke="#f7bd13"/>
+                        <circle gorn="0.3.0.0.0.0.4"  id="circle4148" fill="none" cx="36" cy="54" r="2.052" stroke-width="1.22399998" connectorname="INT/SQW" stroke="#f7bd13"/>
+                        <rect gorn="0.3.0.0.0.0.5"  height="5.2580199" id="rect4150" style="fill:none" width="5.1480899" x="33.367901" y="51.2855"/>
+                        <rect gorn="0.3.0.0.0.0.6"  height="5.16641" id="rect4152" style="fill:none" width="5.38626" x="26.2229" y="51.395401"/>
+                        <rect gorn="0.3.0.0.0.0.7"  height="5.2580199" id="rect4154" style="fill:none" width="5.0076299" x="19.126699" y="51.395401"/>
+                        <rect gorn="0.3.0.0.0.0.8"  height="5.1480899" id="rect4156" style="fill:none" width="5.1175599" x="4.6167898" y="51.395401"/>
+                        <rect gorn="0.3.0.0.0.0.9"  height="5.16641" id="rect4158" style="fill:none" width="5.16641" x="11.8229" y="51.395401"/>
+                        <rect gorn="0.3.0.0.0.0.10"  height="0.0020000001" id="rect4160" style="fill:none" width="0.0020000001" x="7.1994901" y="53.9786"/>
+                        <rect gorn="0.3.0.0.0.0.11"  height="0.0020000001" id="rect4162" style="fill:none" width="0.0020000001" x="14.3822" y="53.976101"/>
+                        <rect gorn="0.3.0.0.0.0.12"  height="5.1480899" id="rect4164" style="fill:none" width="5.1175599" x="11.8234" y="51.402"/>
+                        <rect gorn="0.3.0.0.0.0.13"  height="5.16641" id="rect4166" style="fill:none" width="5.16641" x="4.6162801" y="51.395401"/>
+                        <rect gorn="0.3.0.0.0.0.14"  height="0.0020000001" id="rect4168" style="fill:none" width="0.0020000001" x="7.1994901" y="53.9786"/>
+                        <rect gorn="0.3.0.0.0.0.15"  height="0.0020000001" id="rect4170" style="fill:none" width="0.0020000001" x="14.3822" y="53.976101"/>
+                        <rect gorn="0.3.0.0.0.0.16"  height="5.1480899" id="rect4172" style="fill:none" width="5.1175599" x="11.8234" y="51.402"/>
+                        <rect gorn="0.3.0.0.0.0.17"  height="5.16641" id="rect4174" style="fill:none" width="5.16641" x="4.6162801" y="51.395401"/>
+                        <rect gorn="0.3.0.0.0.0.18"  height="0.0020000001" id="rect4176" style="fill:none" width="0.0020000001" x="7.1994901" y="53.9786"/>
+                        <rect gorn="0.3.0.0.0.0.19"  height="0.0020000001" id="rect4178" style="fill:none" width="0.0020000001" x="14.3822" y="53.976101"/>
+                        <rect gorn="0.3.0.0.0.0.20"  height="5.1480899" id="rect4180" style="fill:none" width="5.1175599" x="11.8234" y="51.402"/>
+                        <rect gorn="0.3.0.0.0.0.21"  height="5.16641" id="rect4182" style="fill:none" width="5.16641" x="4.6162801" y="51.395401"/>
+                        <rect gorn="0.3.0.0.0.0.22"  height="5.9377999" id="connector5pad" style="fill:none" width="5.7388902" x="33.142899" y="50.971401"/>
+                        <rect gorn="0.3.0.0.0.0.23"  height="5.7732601" id="connector6pad" style="fill:none" width="5.7805901" x="25.92" y="51.062901"/>
+                        <rect gorn="0.3.0.0.0.0.24"  height="5.6820102" id="connector7pad" style="fill:none" width="5.62007" x="18.788601" y="51.154301"/>
+                        <rect gorn="0.3.0.0.0.0.25"  height="5.7600002" id="connector8pad" style="fill:none" width="5.7600002" x="11.5657" y="51.062901"/>
+                        <rect gorn="0.3.0.0.0.0.26"  height="5.7732601" id="connector9pad" style="fill:none" width="5.76086" x="4.342" y="51.062901"/>
+                    </g>
+                </g>
+            </g>
+        </g>
+    </g>
+    <g  transform="translate(7.322034,-7.8101696)">
+        <g >
+            <g >
+                <g gorn="0.4.0.0.0"  id="g4189" partID="854125332">
+                    <g gorn="0.4.0.0.0.0"  id="copper1" stroke-width="0">
+                        <g gorn="0.4.0.0.0.0.0"  id="g4192" stroke-width="0">
+                            <circle gorn="0.4.0.0.0.0.0.0"  id="circle4194" fill="none" cx="7.1999998" cy="54" r="2.052" stroke-width="1.22399998" connectorname="SS" stroke="#f7bd13"/>
+                            <circle gorn="0.4.0.0.0.0.0.1"  id="circle4196" fill="none" cx="14.4" cy="54" r="2.052" stroke-width="1.22399998" connectorname="MOSI" stroke="#f7bd13"/>
+                            <circle gorn="0.4.0.0.0.0.0.2"  id="circle4198" fill="none" cx="21.6" cy="54" r="2.052" stroke-width="1.22399998" connectorname="MISO" stroke="#f7bd13"/>
+                            <circle gorn="0.4.0.0.0.0.0.3"  id="circle4200" fill="none" cx="28.799999" cy="54" r="2.052" stroke-width="1.22399998" connectorname="SCLK" stroke="#f7bd13"/>
+                            <circle gorn="0.4.0.0.0.0.0.4"  id="circle4202" fill="none" cx="36" cy="54" r="2.052" stroke-width="1.22399998" connectorname="INT/SQW" stroke="#f7bd13"/>
+                            <rect gorn="0.4.0.0.0.0.0.5"  height="5.2580199" id="rect4204" style="fill:none" width="5.1480899" x="33.367901" y="51.2855"/>
+                            <rect gorn="0.4.0.0.0.0.0.6"  height="5.16641" id="rect4206" style="fill:none" width="5.38626" x="26.2229" y="51.395401"/>
+                            <rect gorn="0.4.0.0.0.0.0.7"  height="5.2580199" id="rect4208" style="fill:none" width="5.0076299" x="19.126699" y="51.395401"/>
+                            <rect gorn="0.4.0.0.0.0.0.8"  height="5.1480899" id="rect4210" style="fill:none" width="5.1175599" x="4.6167898" y="51.395401"/>
+                            <rect gorn="0.4.0.0.0.0.0.9"  height="5.16641" id="rect4212" style="fill:none" width="5.16641" x="11.8229" y="51.395401"/>
+                            <rect gorn="0.4.0.0.0.0.0.10"  height="0.0020000001" id="rect4214" style="fill:none" width="0.0020000001" x="7.1994901" y="53.9786"/>
+                            <rect gorn="0.4.0.0.0.0.0.11"  height="0.0020000001" id="rect4216" style="fill:none" width="0.0020000001" x="14.3822" y="53.976101"/>
+                            <rect gorn="0.4.0.0.0.0.0.12"  height="5.1480899" id="rect4218" style="fill:none" width="5.1175599" x="11.8234" y="51.402"/>
+                            <rect gorn="0.4.0.0.0.0.0.13"  height="5.16641" id="rect4220" style="fill:none" width="5.16641" x="4.6162801" y="51.395401"/>
+                            <rect gorn="0.4.0.0.0.0.0.14"  height="0.0020000001" id="rect4222" style="fill:none" width="0.0020000001" x="7.1994901" y="53.9786"/>
+                            <rect gorn="0.4.0.0.0.0.0.15"  height="0.0020000001" id="rect4224" style="fill:none" width="0.0020000001" x="14.3822" y="53.976101"/>
+                            <rect gorn="0.4.0.0.0.0.0.16"  height="5.1480899" id="rect4226" style="fill:none" width="5.1175599" x="11.8234" y="51.402"/>
+                            <rect gorn="0.4.0.0.0.0.0.17"  height="5.16641" id="rect4228" style="fill:none" width="5.16641" x="4.6162801" y="51.395401"/>
+                            <rect gorn="0.4.0.0.0.0.0.18"  height="0.0020000001" id="rect4230" style="fill:none" width="0.0020000001" x="7.1994901" y="53.9786"/>
+                            <rect gorn="0.4.0.0.0.0.0.19"  height="0.0020000001" id="rect4232" style="fill:none" width="0.0020000001" x="14.3822" y="53.976101"/>
+                            <rect gorn="0.4.0.0.0.0.0.20"  height="5.1480899" id="rect4234" style="fill:none" width="5.1175599" x="11.8234" y="51.402"/>
+                            <rect gorn="0.4.0.0.0.0.0.21"  height="5.16641" id="rect4236" style="fill:none" width="5.16641" x="4.6162801" y="51.395401"/>
+                            <rect gorn="0.4.0.0.0.0.0.22"  height="5.9377999" id="rect4238" style="fill:none" width="5.7388902" x="33.142899" y="50.971401"/>
+                            <rect gorn="0.4.0.0.0.0.0.23"  height="5.7732601" id="rect4240" style="fill:none" width="5.7805901" x="25.92" y="51.062901"/>
+                            <rect gorn="0.4.0.0.0.0.0.24"  height="5.6820102" id="rect4242" style="fill:none" width="5.62007" x="18.788601" y="51.154301"/>
+                            <rect gorn="0.4.0.0.0.0.0.25"  height="5.7600002" id="rect4244" style="fill:none" width="5.7600002" x="11.5657" y="51.062901"/>
+                            <rect gorn="0.4.0.0.0.0.0.26"  height="5.7732601" id="rect4246" style="fill:none" width="5.76086" x="4.342" y="51.062901"/>
+                        </g>
+                        <rect gorn="0.4.0.0.0.0.1"  height="5.2580199" id="rect4248" style="fill:none" width="5.1480899" x="33.367901" y="51.2855"/>
+                        <rect gorn="0.4.0.0.0.0.2"  height="5.16641" id="rect4250" style="fill:none" width="5.38626" x="26.2229" y="51.395401"/>
+                        <rect gorn="0.4.0.0.0.0.3"  height="5.2580199" id="rect4252" style="fill:none" width="5.0076299" x="19.126699" y="51.395401"/>
+                        <rect gorn="0.4.0.0.0.0.4"  height="5.1480899" id="rect4254" style="fill:none" width="5.1175599" x="4.6167898" y="51.395401"/>
+                        <rect gorn="0.4.0.0.0.0.5"  height="5.16641" id="rect4256" style="fill:none" width="5.16641" x="11.8229" y="51.395401"/>
+                        <rect gorn="0.4.0.0.0.0.6"  height="0.0020000001" id="rect4258" style="fill:none" width="0.0020000001" x="7.1994901" y="53.9786"/>
+                        <rect gorn="0.4.0.0.0.0.7"  height="0.0020000001" id="rect4260" style="fill:none" width="0.0020000001" x="14.3822" y="53.976101"/>
+                        <rect gorn="0.4.0.0.0.0.8"  height="5.1480899" id="rect4262" style="fill:none" width="5.1175599" x="11.8234" y="51.402"/>
+                        <rect gorn="0.4.0.0.0.0.9"  height="5.16641" id="rect4264" style="fill:none" width="5.16641" x="4.6162801" y="51.395401"/>
+                        <rect gorn="0.4.0.0.0.0.10"  height="0.0020000001" id="rect4266" style="fill:none" width="0.0020000001" x="7.1994901" y="53.9786"/>
+                        <rect gorn="0.4.0.0.0.0.11"  height="0.0020000001" id="rect4268" style="fill:none" width="0.0020000001" x="14.3822" y="53.976101"/>
+                        <rect gorn="0.4.0.0.0.0.12"  height="5.1480899" id="rect4270" style="fill:none" width="5.1175599" x="11.8234" y="51.402"/>
+                        <rect gorn="0.4.0.0.0.0.13"  height="5.16641" id="rect4272" style="fill:none" width="5.16641" x="4.6162801" y="51.395401"/>
+                        <rect gorn="0.4.0.0.0.0.14"  height="0.0020000001" id="rect4274" style="fill:none" width="0.0020000001" x="7.1994901" y="53.9786"/>
+                        <rect gorn="0.4.0.0.0.0.15"  height="0.0020000001" id="rect4276" style="fill:none" width="0.0020000001" x="14.3822" y="53.976101"/>
+                        <rect gorn="0.4.0.0.0.0.16"  height="5.1480899" id="rect4278" style="fill:none" width="5.1175599" x="11.8234" y="51.402"/>
+                        <rect gorn="0.4.0.0.0.0.17"  height="5.16641" id="rect4280" style="fill:none" width="5.16641" x="4.6162801" y="51.395401"/>
+                        <rect gorn="0.4.0.0.0.0.18"  height="5.9377999" id="rect4282" style="fill:none" width="5.7388902" x="33.142899" y="50.971401"/>
+                        <rect gorn="0.4.0.0.0.0.19"  height="5.7732601" id="rect4284" style="fill:none" width="5.7805901" x="25.92" y="51.062901"/>
+                        <rect gorn="0.4.0.0.0.0.20"  height="5.6820102" id="rect4286" style="fill:none" width="5.62007" x="18.788601" y="51.154301"/>
+                        <rect gorn="0.4.0.0.0.0.21"  height="5.7600002" id="rect4288" style="fill:none" width="5.7600002" x="11.5657" y="51.062901"/>
+                        <rect gorn="0.4.0.0.0.0.22"  height="5.7732601" id="rect4290" style="fill:none" width="5.76086" x="4.342" y="51.062901"/>
+                    </g>
+                </g>
+            </g>
+        </g>
+    </g>
+    <g  transform="translate(7.322034,-7.566102)">
+        <g >
+            <g >
+                <g gorn="0.5.0.0.0"  id="g4292" partID="854125331">
+                    <g gorn="0.5.0.0.0.0"  id="silkscreen" stroke-width="0">
+                        <path gorn="0.5.0.0.0.0.0"  id="path13682" fill="none" stroke-width="0.57599998" d="m -7.212,64.812 57.024,0 0,-57.024 -14.256,0 c -5.67715,0 -9.48194,-0.00588 -15.1591,-0.00588 -5.67715,0 -7.67576,0.00588 -13.3529,0.00588 l -14.256,0 0,57.024" stroke="#ffffff"/>
+                        <g gorn="0.5.0.0.0.0.1"  id="g13684" stroke-width="0">
+                            <title  id="title13686">element:BAT1</title>
+                            <g gorn="0.5.0.0.0.0.1.1"  id="g13688" stroke-width="0">
+                                <title  id="title13690">package:BATTCON_12MM_CURVED</title>
+                            </g>
+                        </g>
+                        <g gorn="0.5.0.0.0.0.2"  id="g13692" stroke-width="0">
+                            <title  id="title13694">element:JP1</title>
+                            <g gorn="0.5.0.0.0.0.2.1"  id="connector0pin" stroke-width="0">
+                                <title  id="title13698">package:1X07</title>
+                                <line gorn="0.5.0.0.0.0.2.1.1"  id="line13724" y1="50.400002" y2="50.400002" x1="27" style="stroke-linecap:round" stroke-width="0.57599998" x2="30.6" stroke="#ffffff"/>
+                                <line gorn="0.5.0.0.0.0.2.1.2"  id="line13726" y1="50.400002" y2="52.200001" x1="30.6" style="stroke-linecap:round" stroke-width="0.57599998" x2="32.400002" stroke="#ffffff"/>
+                                <line gorn="0.5.0.0.0.0.2.1.3"  id="line13728" y1="55.799999" y2="57.599998" x1="32.400002" style="stroke-linecap:round" stroke-width="0.57599998" x2="30.6" stroke="#ffffff"/>
+                                <line gorn="0.5.0.0.0.0.2.1.4"  id="line13730" y1="52.200001" y2="50.400002" x1="32.400002" style="stroke-linecap:round" stroke-width="0.57599998" x2="34.200001" stroke="#ffffff"/>
+                                <line gorn="0.5.0.0.0.0.2.1.5"  id="line13732" y1="50.400002" y2="50.400002" x1="34.200001" style="stroke-linecap:round" stroke-width="0.57599998" x2="37.799999" stroke="#ffffff"/>
+                                <line gorn="0.5.0.0.0.0.2.1.6"  id="line13734" y1="50.400002" y2="52.200001" x1="37.799999" style="stroke-linecap:round" stroke-width="0.57599998" x2="39.599998" stroke="#ffffff"/>
+                                <line gorn="0.5.0.0.0.0.2.1.7"  id="line13736" y1="55.799999" y2="57.599998" x1="39.599998" style="stroke-linecap:round" stroke-width="0.57599998" x2="37.799999" stroke="#ffffff"/>
+                                <line gorn="0.5.0.0.0.0.2.1.8"  id="line13738" y1="57.599998" y2="57.599998" x1="37.799999" style="stroke-linecap:round" stroke-width="0.57599998" x2="34.200001" stroke="#ffffff"/>
+                                <line gorn="0.5.0.0.0.0.2.1.9"  id="connector4pin" y1="57.599998" y2="55.799999" x1="34.200001" style="stroke-linecap:round" stroke-width="0.57599998" x2="32.400002" stroke="#ffffff"/>
+                                <line gorn="0.5.0.0.0.0.2.1.10"  id="line13742" y1="52.200001" y2="50.400002" x1="18" style="stroke-linecap:round" stroke-width="0.57599998" x2="19.799999" stroke="#ffffff"/>
+                                <line gorn="0.5.0.0.0.0.2.1.11"  id="line13744" y1="50.400002" y2="50.400002" x1="19.799999" style="stroke-linecap:round" stroke-width="0.57599998" x2="23.4" stroke="#ffffff"/>
+                                <line gorn="0.5.0.0.0.0.2.1.12"  id="line13746" y1="50.400002" y2="52.200001" x1="23.4" style="stroke-linecap:round" stroke-width="0.57599998" x2="25.200001" stroke="#ffffff"/>
+                                <line gorn="0.5.0.0.0.0.2.1.13"  id="line13748" y1="55.799999" y2="57.599998" x1="25.200001" style="stroke-linecap:round" stroke-width="0.57599998" x2="23.4" stroke="#ffffff"/>
+                                <line gorn="0.5.0.0.0.0.2.1.14"  id="line13750" y1="57.599998" y2="57.599998" x1="23.4" style="stroke-linecap:round" stroke-width="0.57599998" x2="19.799999" stroke="#ffffff"/>
+                                <line gorn="0.5.0.0.0.0.2.1.15"  id="connector2pin" y1="57.599998" y2="55.799999" x1="19.799999" style="stroke-linecap:round" stroke-width="0.57599998" x2="18" stroke="#ffffff"/>
+                                <line gorn="0.5.0.0.0.0.2.1.16"  id="line13754" y1="50.400002" y2="52.200001" x1="27" style="stroke-linecap:round" stroke-width="0.57599998" x2="25.200001" stroke="#ffffff"/>
+                                <line gorn="0.5.0.0.0.0.2.1.17"  id="connector3pin" y1="55.799999" y2="57.599998" x1="25.200001" style="stroke-linecap:round" stroke-width="0.57599998" x2="27" stroke="#ffffff"/>
+                                <line gorn="0.5.0.0.0.0.2.1.18"  id="line13758" y1="57.599998" y2="57.599998" x1="30.6" style="stroke-linecap:round" stroke-width="0.57599998" x2="27" stroke="#ffffff"/>
+                                <line gorn="0.5.0.0.0.0.2.1.19"  id="line13760" y1="50.400002" y2="50.400002" x1="5.4000001" style="stroke-linecap:round" stroke-width="0.57599998" x2="9" stroke="#ffffff"/>
+                                <line gorn="0.5.0.0.0.0.2.1.20"  id="line13762" y1="50.400002" y2="52.200001" x1="9" style="stroke-linecap:round" stroke-width="0.57599998" x2="10.8" stroke="#ffffff"/>
+                                <line gorn="0.5.0.0.0.0.2.1.21"  id="line13764" y1="55.799999" y2="57.599998" x1="10.8" style="stroke-linecap:round" stroke-width="0.57599998" x2="9" stroke="#ffffff"/>
+                                <line gorn="0.5.0.0.0.0.2.1.22"  id="line13766" y1="52.200001" y2="50.400002" x1="10.8" style="stroke-linecap:round" stroke-width="0.57599998" x2="12.6" stroke="#ffffff"/>
+                                <line gorn="0.5.0.0.0.0.2.1.23"  id="line13768" y1="50.400002" y2="50.400002" x1="12.6" style="stroke-linecap:round" stroke-width="0.57599998" x2="16.200001" stroke="#ffffff"/>
+                                <line gorn="0.5.0.0.0.0.2.1.24"  id="line13770" y1="50.400002" y2="52.200001" x1="16.200001" style="stroke-linecap:round" stroke-width="0.57599998" x2="18" stroke="#ffffff"/>
+                                <line gorn="0.5.0.0.0.0.2.1.25"  id="line13772" y1="55.799999" y2="57.599998" x1="18" style="stroke-linecap:round" stroke-width="0.57599998" x2="16.200001" stroke="#ffffff"/>
+                                <line gorn="0.5.0.0.0.0.2.1.26"  id="line13774" y1="57.599998" y2="57.599998" x1="16.200001" style="stroke-linecap:round" stroke-width="0.57599998" x2="12.6" stroke="#ffffff"/>
+                                <line gorn="0.5.0.0.0.0.2.1.27"  id="connector1pin" y1="57.599998" y2="55.799999" x1="12.6" style="stroke-linecap:round" stroke-width="0.57599998" x2="10.8" stroke="#ffffff"/>
+                                <line gorn="0.5.0.0.0.0.2.1.28"  id="line13778" y1="52.200001" y2="55.799999" x1="3.5999999" style="stroke-linecap:round" stroke-width="0.57599998" x2="3.5999999" stroke="#ffffff"/>
+                                <line gorn="0.5.0.0.0.0.2.1.29"  id="line13780" y1="50.400002" y2="52.200001" x1="5.4000001" style="stroke-linecap:round" stroke-width="0.57599998" x2="3.5999999" stroke="#ffffff"/>
+                                <line gorn="0.5.0.0.0.0.2.1.30"  id="line13782" y1="55.799999" y2="57.599998" x1="3.5999999" style="stroke-linecap:round" stroke-width="0.57599998" x2="5.4000001" stroke="#ffffff"/>
+                                <line gorn="0.5.0.0.0.0.2.1.31"  id="line13784" y1="57.599998" y2="57.599998" x1="9" style="stroke-linecap:round" stroke-width="0.57599998" x2="5.4000001" stroke="#ffffff"/>
+                                <line gorn="0.5.0.0.0.0.2.1.32"  id="line13786" y1="52.2248" y2="55.824799" style="stroke-linecap:round" x1="39.591202" stroke-width="0.57599998" x2="39.591202" stroke="#ffffff"/>
+                            </g>
+                        </g>
+                        <g gorn="0.5.0.0.0.0.3"  id="g13788" stroke-width="0">
+                            <title  id="title13790">element:U1</title>
+                            <g  transform="matrix(0,1,-1,0,49.0622,-18.8951)">
+                                <g >
+                                    <g >
+                                        <g gorn="0.5.0.0.0.0.3.1.0.0.0"  id="g4338">
+                                            <g gorn="0.5.0.0.0.0.3.1.0.0.0.0"  id="g13792" stroke-width="0">
+                                                <title  id="title13794">package:DS3234</title>
+                                            </g>
+                                        </g>
+                                    </g>
+                                </g>
+                            </g>
+                        </g>
+                    </g>
+                </g>
+            </g>
+        </g>
+    </g>
+    <g gorn="0.6"  id="text4356" fill="#000000" font-size="3.2" stroke-opacity="1" style="font-style:normal;font-weight:normal;line-height:125%;font-family:Droid Sans;letter-spacing:0px;word-spacing:0px;stroke-linecap:butt;stroke-linejoin:miter;" stroke-width="0.8" xml:space="preserve" fill-opacity="1" xmlns:xml="http://www.w3.org/XML/1998/namespace" stroke="none">
+        <text gorn="0.6.0"  id="tspan4358" x="10.3" y="55.400002">GND</text>
+    </g>
+    <g gorn="0.7"  id="text4360" fill="#000000" font-size="3.2" stroke-opacity="1" style="font-style:normal;font-weight:normal;line-height:125%;font-family:Droid Sans;letter-spacing:0px;word-spacing:0px;stroke-linecap:butt;stroke-linejoin:miter;" stroke-width="0.8" xml:space="preserve" fill-opacity="1" xmlns:xml="http://www.w3.org/XML/1998/namespace" stroke="none">
+        <text gorn="0.7.0"  id="tspan4362" x="20.300001" y="55.099998">+</text>
+    </g>
+    <g gorn="0.8"  id="text4364" fill="#000000" font-size="3.2" stroke-opacity="1" style="font-style:normal;font-weight:normal;line-height:125%;font-family:Droid Sans;letter-spacing:0px;word-spacing:0px;stroke-linecap:butt;stroke-linejoin:miter;" stroke-width="0.8" xml:space="preserve" fill-opacity="1" xmlns:xml="http://www.w3.org/XML/1998/namespace" stroke="none">
+        <text gorn="0.8.0"  id="tspan4366" x="25.799999" y="55.300003">SW</text>
+    </g>
+    <g gorn="0.9"  id="text4368" fill="#000000" font-size="3.2" stroke-opacity="1" style="font-style:normal;font-weight:normal;line-height:125%;font-family:Droid Sans;letter-spacing:0px;word-spacing:0px;stroke-linecap:butt;stroke-linejoin:miter;" stroke-width="0.8" xml:space="preserve" fill-opacity="1" xmlns:xml="http://www.w3.org/XML/1998/namespace" stroke="none">
+        <text gorn="0.9.0"  id="tspan4370" x="33.300003" y="55.200001">DT</text>
+    </g>
+    <g gorn="0.10"  id="text4372" fill="#000000" font-size="3.2" stroke-opacity="1" style="font-style:normal;font-weight:normal;line-height:125%;font-family:Droid Sans;letter-spacing:0px;word-spacing:0px;stroke-linecap:butt;stroke-linejoin:miter;" stroke-width="0.8" xml:space="preserve" fill-opacity="1" xmlns:xml="http://www.w3.org/XML/1998/namespace" stroke="none">
+        <text gorn="0.10.0"  id="tspan4374" x="40" y="55">CLK</text>
+    </g>
+</svg>

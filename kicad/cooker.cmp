@@ -1,0 +1,31 @@
+Cmp-Mod V01 Created by CvPcb (2013-jul-07)-stable date = ons 24 maj 2017 10:51:56
+
+BeginCmp
+TimeStamp = /592539CE;
+Reference = R1;
+ValeurCmp = R;
+IdModule  = R3;
+EndCmp
+
+BeginCmp
+TimeStamp = /592539E2;
+Reference = R2;
+ValeurCmp = R;
+IdModule  = R3;
+EndCmp
+
+BeginCmp
+TimeStamp = /592539F1;
+Reference = R3;
+ValeurCmp = R;
+IdModule  = R3;
+EndCmp
+
+BeginCmp
+TimeStamp = /59253B06;
+Reference = U1;
+ValeurCmp = ESP-01V090;
+IdModule  = pin_array_4x2;
+EndCmp
+
+EndListe

@@ -45,3 +45,9 @@ så den är lite mer lättläslig och robust.
 17/5
 Har stökat om i tolken så att den även kan acceptera strängar. Det är möjligt att ställa in ssid + lösenord för wifi,
 vilket lagras i EEPROM.
+
+18/5
+Några mindre förbättringar på tollken, och ett basiskt autentiseringssystem är implementerat.
+
+24/5
+Låda inskaffad, har börjat designa ett mönsterkort

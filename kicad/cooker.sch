@@ -1,0 +1,158 @@
+EESchema Schematic File Version 2
+LIBS:power
+LIBS:device
+LIBS:transistors
+LIBS:conn
+LIBS:linear
+LIBS:regul
+LIBS:74xx
+LIBS:cmos4000
+LIBS:adc-dac
+LIBS:memory
+LIBS:xilinx
+LIBS:special
+LIBS:microcontrollers
+LIBS:dsp
+LIBS:microchip
+LIBS:analog_switches
+LIBS:motorola
+LIBS:texas
+LIBS:intel
+LIBS:audio
+LIBS:interface
+LIBS:digital-audio
+LIBS:philips
+LIBS:display
+LIBS:cypress
+LIBS:siliconi
+LIBS:opto
+LIBS:atmel
+LIBS:contrib
+LIBS:valves
+LIBS:ESP8266
+LIBS:cooker-cache
+EELAYER 27 0
+EELAYER END
+$Descr A4 11693 8268
+encoding utf-8
+Sheet 1 1
+Title ""
+Date "24 may 2017"
+Rev ""
+Comp ""
+Comment1 ""
+Comment2 ""
+Comment3 ""
+Comment4 ""
+$EndDescr
+$Comp
+L R R1
+U 1 1 592539CE
+P 3400 3900
+F 0 "R1" V 3480 3900 40  0000 C CNN
+F 1 "R" V 3407 3901 40  0000 C CNN
+F 2 "~" V 3330 3900 30  0000 C CNN
+F 3 "~" H 3400 3900 30  0000 C CNN
+	1    3400 3900
+	1    0    0    -1  
+$EndComp
+$Comp
+L R R2
+U 1 1 592539E2
+P 3650 3900
+F 0 "R2" V 3730 3900 40  0000 C CNN
+F 1 "R" V 3657 3901 40  0000 C CNN
+F 2 "~" V 3580 3900 30  0000 C CNN
+F 3 "~" H 3650 3900 30  0000 C CNN
+	1    3650 3900
+	1    0    0    -1  
+$EndComp
+$Comp
+L R R3
+U 1 1 592539F1
+P 3850 3900
+F 0 "R3" V 3930 3900 40  0000 C CNN
+F 1 "R" V 3857 3901 40  0000 C CNN
+F 2 "~" V 3780 3900 30  0000 C CNN
+F 3 "~" H 3850 3900 30  0000 C CNN
+	1    3850 3900
+	1    0    0    -1  
+$EndComp
+$Comp
+L ESP-01V090 U1
+U 1 1 59253B06
+P 3550 2950
+F 0 "U1" H 3550 2850 50  0000 C CNN
+F 1 "ESP-01V090" H 3550 3050 50  0000 C CNN
+F 2 "" H 3550 2950 50  0001 C CNN
+F 3 "" H 3550 2950 50  0001 C CNN
+	1    3550 2950
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	3650 3650 3850 3650
+Wire Wire Line
+	3650 4150 3400 4150
+Wire Wire Line
+	2600 2800 2500 2800
+Wire Wire Line
+	2500 2800 2500 3500
+Wire Wire Line
+	2500 3500 3650 3500
+Wire Wire Line
+	3650 3500 3650 3650
+$Comp
+L +3,3V #PWR01
+U 1 1 59253C07
+P 2950 2200
+F 0 "#PWR01" H 2950 2160 30  0001 C CNN
+F 1 "+3,3V" H 2950 2310 30  0000 C CNN
+F 2 "" H 2950 2200 60  0000 C CNN
+F 3 "" H 2950 2200 60  0000 C CNN
+	1    2950 2200
+	1    0    0    -1  
+$EndComp
+$Comp
+L GND #PWR02
+U 1 1 59253C21
+P 2700 2150
+F 0 "#PWR02" H 2700 2150 30  0001 C CNN
+F 1 "GND" H 2700 2080 30  0001 C CNN
+F 2 "" H 2700 2150 60  0000 C CNN
+F 3 "" H 2700 2150 60  0000 C CNN
+	1    2700 2150
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	2950 2200 2950 2350
+Wire Wire Line
+	2950 2350 2300 2350
+Wire Wire Line
+	2300 2350 2300 3100
+Wire Wire Line
+	2300 2900 2600 2900
+Wire Wire Line
+	2300 3000 2600 3000
+Connection ~ 2300 2900
+Wire Wire Line
+	2300 3100 2600 3100
+Connection ~ 2300 3000
+Wire Wire Line
+	2700 2200 2700 2450
+Wire Wire Line
+	2700 2450 4550 2450
+Wire Wire Line
+	4550 2450 4550 2800
+Wire Wire Line
+	4550 2800 4500 2800
+Wire Wire Line
+	2300 2550 4650 2550
+Wire Wire Line
+	4650 2550 4650 3000
+Wire Wire Line
+	4650 3000 4500 3000
+Connection ~ 2300 2550
+Wire Wire Line
+	4500 2900 4650 2900
+Connection ~ 4650 2900
+$EndSCHEMATC

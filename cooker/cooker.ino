@@ -41,21 +41,25 @@
 #define BT_TX   18 //A4, goes to rx on module through voltage divider
 #define BT_RX   19 //A5, goes to tx on module
 
-// WiFi module, deprecated?
-#define WIFI_TX 14
-#define WIFI_RX 15
+// WiFi module [deprecated?]
+//#define WIFI_TX 14
+//#define WIFI_RX 15
+
+#define PWR_SWITCH 14
 
 #define RELAY   10
 
 #define LED     17
 
 // coordinates on LCD display
-#define TIMER_X 8
-#define TIMER_Y 1
-#define TEMP_X 0
+#define TIMER_X 1
+#define TIMER_Y 0
+#define TEMP_X 1
 #define TEMP_Y 1
-#define TARGET_X 0
+#define TARGET_X 10
 #define TARGET_Y 0
+#define LCD_W  16
+#define LCD_H  2
 
 #define AT_DELAY 200
 
@@ -110,10 +114,33 @@ void pci_setup(byte pin);
 void update_display(void);
 
 void change_target(enum direction d);
-void change_status(enum direction d);
 void change_hours(enum direction d);
 void change_minutes(enum direction d);
 void change_seconds(enum direction d);
+
+byte clock[8] =
+{
+  B00000,
+  B00100,
+  B01110,
+  B01110,
+  B01110,
+  B11111,
+  B00100,
+  B00000,
+};
+
+byte tmp_sprite[8] =
+{
+  B00100,
+  B01010,
+  B01010,
+  B01110,
+  B01110,
+  B11111,
+  B11111,
+  B01110,
+};
 
 bool tick = false; //one tick every second
 
@@ -123,7 +150,6 @@ mode_func modes[] =
   change_hours,
   change_minutes,
   change_seconds,
-  change_status,
 };
 int current_mode;
 
@@ -292,9 +318,6 @@ void update_display(void)
   display_print<print_temperature>(temperature, TEMP_X, TEMP_Y);
   display_print<print_target>(target, TARGET_X, TARGET_Y);
   display_print<print_timer>(timer, TIMER_X, TIMER_Y);
-
-  lcd.setCursor(15, 0);
-  lcd.print(current_mode);
 }
 
 void change_target(enum direction d)
@@ -303,15 +326,6 @@ void change_target(enum direction d)
     target = (target == TEMP_MAX) ? TEMP_MAX : target + 1;
   else
     target = (target == TEMP_MIN) ? TEMP_MIN : target - 1;
-}
-
-void change_status(enum direction d)
-{
-  if (timer)
-    activated = !activated;
-
-  if (activated) //timer starting, reset timer counter
-    TCNT1 = 0;
 }
 
 void change_hours(enum direction d)
@@ -380,22 +394,31 @@ void setup(void)
   sensors.begin();
   enc.begin();
   Serial.begin(9600);
-  lcd.begin(16, 2);
+  lcd.begin(LCD_W, LCD_H);
   pci_setup(BT_RX);
   pci_setup(BT_TX);
   BT.begin(9600);
 
   pinMode(RELAY, OUTPUT);
   pinMode(LED, OUTPUT);
+  pinMode(PWR_SWITCH, INPUT_PULLUP);
   digitalWrite(RELAY, LOW);
   digitalWrite(LED, LOW);
 
   print_target(TARGET_X, TARGET_Y);
 
-  lcd.setCursor(8, 1);
+  lcd.createChar(0, clock);
+  lcd.setCursor(TIMER_X - 1, TIMER_Y);
+  lcd.write(byte(0));
+  
+  lcd.setCursor(TIMER_X, TIMER_Y);
   lcd.print("00:00:00");
 
-  lcd.setCursor(4, 1);
+  lcd.createChar(1, tmp_sprite);
+  lcd.setCursor(TEMP_X - 1, TEMP_Y);
+  lcd.write(byte(1));
+  
+  lcd.setCursor(TEMP_X + 4, TEMP_Y);
   lcd.write(0xDF); //degree sign
   lcd.write('C');
 
@@ -681,8 +704,20 @@ void update_tick(void)
 }
 
 void loop(void)
-{
+{  
+  static bool foo = false;
   update_IO();
+  
+  if (!digitalRead(PWR_SWITCH) && !foo)
+  {
+    activated = !activated;
+    foo = true;
+    
+    if (activated) //timer starting, reset timer counter
+      TCNT1 = 0;
+  }
+  else if (digitalRead(PWR_SWITCH) && foo)
+    foo = false;
 
   if (tick)
   {

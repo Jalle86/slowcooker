@@ -48,3 +48,7 @@ vilket lagras i EEPROM.
 
 18/5
 Några mindre förbättringar på tollken, och ett basiskt autentiseringssystem är implementerat.
+
+24/5
+Låda inskaffad, har börjat designa ett mönsterkort, och hela uppställningen fungerar som den ska göra, bortsett
+från störningar på LCD-skärmen.

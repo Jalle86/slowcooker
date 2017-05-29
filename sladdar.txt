@@ -1,0 +1,6 @@
+encoder:
+vit lila vlå röd svart
+
+lcd:
+svart, röd, vit, brun, grå, blå,
+brun, gul, grön, lila, grå, orange
