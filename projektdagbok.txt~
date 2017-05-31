@@ -50,4 +50,16 @@ vilket lagras i EEPROM.
 Några mindre förbättringar på tollken, och ett basiskt autentiseringssystem är implementerat.
 
 24/5
-Låda inskaffad, har börjat designa ett mönsterkort
+Låda inskaffad, har börjat designa ett mönsterkort, och hela uppställningen fungerar som den ska göra, bortsett
+från störningar på LCD-skärmen.
+
+29/5
+Inbyggnaden fortskrider bra, mönsterkortet håller på att bli designat, och LCD-skärmen har börjat få en remake.
+
+30/5
+Har gjort större delen av jobbet på nya LCD-interfacet. Mönsterkortet är även till stora delar färdigdesignat,
+men det saknas några viktiga pusselbitar som t.ex. reläet som ska användas. Borde börja skriva på rapporten imorgon
+tror jag...
+
+31/5
+Nya LCD-designen fungerar som den ska, SSR:en fungerar även den och det som återstår är att implementera proportionell kontroll med den. Även fått 2 sidor skrivna på rapporten

@@ -51,13 +51,13 @@
 
 #define LED     17
 
-
-
 // coordinates on LCD display
 #define TIMER_X 1
 #define TIMER_Y 0
 #define TEMP_X 1
 #define TEMP_Y 1
+#define TARGET_X 10
+#define TARGET_Y 0
 #define LCD_W  16
 #define LCD_H  2
 
@@ -65,7 +65,7 @@
 
 #define CLOCK byte(0)
 #define SENSOR byte(1)
-#define ARROW byte(2)
+#define ARROW byte (2)
 
 enum direction
 {
@@ -73,27 +73,57 @@ enum direction
   CLOCKWISE,
 };
 
-/*  Necessary function prototypes. Arduino IDE prepends function
-    prototypes during compilation, but they are declared before
-    dependencies such as structs or enums are declared. */
-    
+enum time_unit
+{
+  HOURS, MINUTES, SECONDS,
+};
+
 typedef void (*mode_func)(enum direction);
+typedef void (*switch_func)(bool b);
 typedef void (*print_func)(int, int);
 typedef int (*rcv_func)(Stream &, char *);
 typedef void (*send_func)(Stream &, const char *);
 typedef int32_t fixed; //fixed point number, one decimal precision
 
+int freeRam(void);
+
 bool interpret_stream_auth(Stream &stream);
 bool interpret_stream(Stream &stream, rcv_func rcv, send_func snd);
 
-void view_change(enum direction d);
-void menu_change(enum direction d);
-void target_change(enum direction d);
-void timer_change(enum direction d);
+int rcv_wifi_data_ip(Stream &stream, char *buffer, char ip[4]);
+int rcv_wifi_data(Stream &stream, char *buffer);
+void send_wifi_data(Stream &stream, const char *data);
 
-/* * * * * * * * * *
- * LCD MENU STRUCTS*
- * * * * * * * * * */
+int rcv_bt_data(Stream &stream, char *buffer);
+void send_bt_data(Stream &stream, const char *data);
+
+bool stream_pipeline(Stream &from, Stream &to);
+void send_AT_cmd(Stream &s, const char *cmd, char *buffer);
+bool get_authentication(Stream &stream);
+
+template<print_func f>
+void display_print(int32_t v, int col, int row);
+template <enum time_unit n>
+void print_time(int col, int row, int val);
+void print_timer(int col, int row);
+void print_target(int col, int row);
+void print_temperature(int col, int row, float temp);
+
+void cw_event(void);
+void ccw_event(void);
+void btn_event(void);
+
+void init_timer(void);
+void update_temperature(void);
+void pci_setup(byte pin);
+void update_display(void);
+
+void change_target(enum direction d);
+void change_hours(enum direction d);
+void change_minutes(enum direction d);
+void change_seconds(enum direction d);
+
+bool tick = false; //one tick every second
 
 // Custom 8x5 LCD characters
 byte clock[8] =
@@ -125,45 +155,126 @@ byte arrow[8] =
   B10000,
   B11000,
   B11100,
-  B11110,
+  B11110
   B11100,
   B11000,
   B10000,
   B00000,
 };
 
-struct lcd_mode
+struct lcd_option =
 {
-  void (*init)(void);
-  mode_func change;
-  void (*update)(void);
-  struct lcd_mode (*next)(void);
-};
-
-struct option
-{
+  int *val;
   char *menu_text;
-  char *option_text;
-  struct lcd_mode next;
+  char *change_text;
+  mode_func func;
 };
 
-struct lcd_mode mode[] =
+struct button_funcs =
 {
-  { view_init,      view_change,    view_update, view_next   },
-  { menu_init,      menu_change,    menu_update, menu_next   },
-  { opt_trgt_init,  target_change,  opt_trgt_update, option_next },
-  { opt_tmr_init,   timer_change,   opt_tmr_update, option_next },
+  mode_func rot;
+  switch_func sw;
 };
-struct lcd_mode current_mode = mode[0];
 
-struct option options[] =
+lcd_option options[] =
 {
-  { "Target", "Target temp.:", mode[2] },
-  { "Timer", "Timer:", mode[3] },
+  { &target, "Target", "Target temp.:", change_target },
+  { &timer, "Timer", "Timer:", change_time },
 };
+
+struct button_funcs mode[] =
+{
+};
+
 int menu_position = 0;
+mode_func current = move_cursor();
 
-/*************************************************/
+
+void display_view(void)
+{
+  lcd.setCursor(TIMER_X - 1, TIMER_Y);
+  lcd.write(CLOCK);
+  
+  lcd.setCursor(TIMER_X, TIMER_Y);
+  lcd.print("00:00:00");
+
+  lcd.setCursor(TEMP_X - 1, TEMP_Y);
+  lcd.write(SENSOR);
+  
+  lcd.setCursor(TEMP_X + 4, TEMP_Y);
+  lcd.write(0xDF); //degree sign
+  lcd.write('C');
+  
+  display_print<print_temperature>(temperature, TEMP_X, TEMP_Y);
+  display_print<print_timer>(timer, TIMER_X, TIMER_Y);
+}
+
+// dummy function
+void move_view(enum direction d)
+{
+}
+
+void view_transition(bool b)
+{
+  current = 
+}
+
+#define SET_MENU_POS(X) (lcd.setCursor(1 + 7 % (X), (X) / 2))
+void display_menu(void)
+{
+  int i;
+  menu_position = 0;
+  for (i = 0; i < sizeof(options); i++)
+  {
+    SET_MENU_POS(i);
+    lcd.print(option[i].menu_text);
+    col = !col;
+  }
+  
+  SET_MENU_POS(i);
+  lcd.print("Back");
+  
+  display_cursor();
+}
+
+void display_cursor(void)
+{
+  SET_MENU_POS(menu_position);
+  lcd.write(ARROW);
+}
+
+void move_cursor(enum direction d)
+{
+  SET_MENU_POS(menu_position);
+  lcd.write(0x01); //clear cursor
+  
+  if (d == COUNTERCLOCKWISE)
+    menu_position--;
+  else //CLOCKWISE
+    menu_position++;
+    
+  menu_position %= sizeof(options) + 1; //add one for back option
+  
+  display_cursor();
+}
+
+void menu_transition(bool b)
+{
+  if menu_position < sizeof(options)
+  {
+  }
+}
+
+// LCD Related
+mode_func modes[] =
+{
+  change_target,
+  change_hours,
+  change_minutes,
+  change_seconds,
+};
+int current_mode;
+
 
 // IP address of WIFI-module, represented as a string for ease of use with interpreter 
 char esp_ip[16] = { "0.0.0.0" };
@@ -188,217 +299,27 @@ OneWire tempWire(ONEWIRE);
 DallasTemperature sensors(&tempWire);
 SoftwareSerial BT(BT_RX, BT_TX, false);
 
-bool tick = false; //one tick every second
-int cycle_length = 10; //10 time units, 1 time unit == 10ms
-float duty_cycle;
-float kp;
-
-void update_controller(void)
+int freeRam(void) 
 {
-  fixed error = 10 * target - temperature;
-  
-  duty_cycle = kp * error;
-  
-  if (duty_cycle > 1)
-    duty_cycle = 1;
-  else if (duty_cycle < 0)
-    duty_cycle = 0;
-}
-
-void update_relay(void)
-{
-  static int cycle_time = 0;
-  if (cycle_time <= duty_cycle * 10)
-    digitalWrite(RELAY, HIGH);
-  else
-    digitalWrite(RELAY,LOW);
-    
-  cycle_time++;
-  if (cycle_time >= cycle_length)
-    cycle_time = 0;
-}
-
-/* * * * * * * * *
- * LCD FUNCTIONS *
- * * * * * * * * */
-
-// VIEW //
-
-void view_init(void)
-{
-  lcd.setCursor(TIMER_X - 1, TIMER_Y);
-  lcd.write(CLOCK);
-  
-  lcd.setCursor(TIMER_X, TIMER_Y);
-  lcd.print("00:00:00");
-
-  lcd.setCursor(TEMP_X - 1, TEMP_Y);
-  lcd.write(SENSOR);
-  
-  lcd.setCursor(TEMP_X + 4, TEMP_Y);
-  lcd.write(0xDF); //degree sign
-  lcd.write('C');
-  
-  print_temperature(TEMP_X, TEMP_Y);
-  print_timer(TIMER_X, TIMER_Y);
-}
-
-void view_update(void)
-{
-  static int temp_old = temperature;
-  static int timer_old = timer;
-  
-  if (temperature != temp_old)
-  {
-    print_temperature(TEMP_X, TEMP_Y);
-    temp_old = temperature;
-  }
-    
-  if (timer != timer_old)
-  {
-    print_timer(TIMER_X, TIMER_Y);
-    timer_old = timer;
-  }
-}
-
-// dummy function
-void view_change(enum direction d)
-{
-}
-
-struct lcd_mode view_next(void)
-{
-  return mode[1];
-}
-
-// MENU //
-
-#define SET_MENU_POS(X) (lcd.setCursor(1 + 7 * ((X) % 2), (X) / 2))
-void menu_init(void)
-{
-  int i = 0;
-  menu_position = 0;
-  
-  for (i = 0; i < sizeof(options)/sizeof(*options); i++)
-  {
-    SET_MENU_POS(i);
-    lcd.print(options[i].menu_text);
-  }
-  
-  SET_MENU_POS(i);
-  lcd.print("Back");
-  
-  display_cursor();
-}
-
-void menu_update(void)
-{
-}
-
-void display_cursor(void)
-{
-  lcd.setCursor(7 * (menu_position % 2), menu_position / 2);
-  lcd.write(ARROW);
-}
-
-void menu_change(enum direction d)
-{
-  lcd.setCursor(7 * (menu_position % 2), menu_position / 2);
-  lcd.write(' '); //clear cursor
-  
-  if (d == COUNTERCLOCKWISE)
-    menu_position--;
-  else //CLOCKWISE
-    menu_position++;
-    
-  if (menu_position < 0)
-     menu_position = sizeof(options) / sizeof(*options);
-  else if (menu_position > sizeof(options)/sizeof(*options))
-    menu_position = 0;
-    
-  display_cursor();
-}
-
-struct lcd_mode menu_next(void)
-{
-  if (menu_position < sizeof(options)/sizeof(*options))
-    return options[menu_position].next;
-  else
-    return mode[0];
-}
-
-
-// OPTION //
-
-void opt_trgt_init(void)
-{
-  lcd.setCursor(0, 0);
-  lcd.print("Target temp.:");
-  print_target(0, 1);
-  lcd.write(0xDF); //degree sign
-  lcd.write('C');  
-}
-
-void opt_tmr_init(void)
-{
-  lcd.setCursor(0, 0);
-  lcd.print("Timer:");
-  lcd.setCursor(0, 1);
-  
-  print_timer(0, 1);
-}
-
-void opt_trgt_update(void)
-{
-  static int target_old = target;
-  
-  if (target != target_old)
-  {
-    print_target(0, 1);
-    target_old = target;
-  }
-}
-
-void opt_tmr_update(void)
-{
-  static int timer_old = timer;
-  
-  if (timer != timer_old)
-  {
-    print_timer(0, 1);
-    timer_old = timer;
-  }
-}
-
-void target_change(enum direction d)
-{
-  if (d == CLOCKWISE)
-    target = (target == TEMP_MAX) ? TEMP_MAX : target + 1;
-  else
-    target = (target == TEMP_MIN) ? TEMP_MIN : target - 1;
-}
-
-void timer_change(enum direction d)
-{
-  int minutes = (timer % 3600) / 60;
-  if (d == CLOCKWISE)
-    timer += 5 * 60; //5 minutes increment
-  else if (d == COUNTERCLOCKWISE && minutes >= 5)
-    timer -= 5 * 60;
-}
-
-struct lcd_mode option_next(void)
-{
-  return mode[0];
+  extern int __heap_start, *__brkval; 
+  int v; 
+  return (int) &v - (__brkval == 0 ? (int) &__heap_start : (int) __brkval); 
 }
     
+template <enum time_unit n>
 void print_time(int col, int row, int val)
 {
-    char num_string[3] = { 0 };
+  static int old = 0;
+  char num_string[3] = { 0 };
+  
+  if (val != old)
+  {
+    old = val;
     sprintf(num_string, "%02d", val);
     
     lcd.setCursor(col, row);
     lcd.print(num_string);
+  }
 }
 
 void print_timer(int col, int row)
@@ -408,18 +329,16 @@ void print_timer(int col, int row)
 
   // hours
   hours = tmp / 3600;
-  print_time(col, row, hours);
-  lcd.write(':');
+  print_time<HOURS>(col, row, hours);
 
   // minutes
   tmp %= 3600;
   minutes = tmp / 60;
-  print_time(col + 3, row, minutes);
-  lcd.write(':');
-  
+  print_time<MINUTES>(col + 3, row, minutes);
+
   // seconds
   tmp %= 60;
-  print_time(col + 6, row, tmp);
+  print_time<SECONDS>(col + 6, row, tmp);
 }
 
 void print_target(int col, int row)
@@ -443,19 +362,17 @@ void print_temperature(int col, int row)
 
 void cw_event(void)
 {
-  current_mode.change(CLOCKWISE);
+  modes[current_mode](CLOCKWISE);
 }
 
 void ccw_event(void)
 {
-  current_mode.change(COUNTERCLOCKWISE);
+  modes[current_mode](COUNTERCLOCKWISE);
 }
 
 void btn_event(void)
 {
-  lcd.clear();
-  current_mode = current_mode.next();
-  current_mode.init();
+  current_mode = ++current_mode % (sizeof(modes) / sizeof(*modes));
 }
 
 void init_timer(void)
@@ -504,6 +421,62 @@ void pci_setup(byte pin)
   *digitalPinToPCMSK(pin) |= bit (digitalPinToPCMSKbit(pin));  // enable pin
   PCIFR  |= bit (digitalPinToPCICRbit(pin)); // clear any outstanding interrupt
   PCICR  |= bit (digitalPinToPCICRbit(pin)); // enable interrupt for the group
+}
+
+template<print_func f>
+void display_print(int32_t v, int col, int row)
+{
+  static int32_t old = 0;
+
+  // only update display if the content has changed
+  if(v != old)
+  {
+    f(col, row);
+    old = v;
+  }
+}
+
+void update_display(void)
+{  
+  display_print<print_temperature>(temperature, TEMP_X, TEMP_Y);
+  display_print<print_target>(target, TARGET_X, TARGET_Y);
+  display_print<print_timer>(timer, TIMER_X, TIMER_Y);
+}
+
+void change_target(enum direction d)
+{
+  if (d == CLOCKWISE)
+    target = (target == TEMP_MAX) ? TEMP_MAX : target + 1;
+  else
+    target = (target == TEMP_MIN) ? TEMP_MIN : target - 1;
+}
+
+void change_hours(enum direction d)
+{
+  int hours = timer / 3600;
+
+  if (d == CLOCKWISE && hours < 99)
+    timer += 3600;
+  else if (d == COUNTERCLOCKWISE && hours > 0)
+    timer -= 3600;
+}
+
+void change_minutes(enum direction d)
+{
+  int minutes = (timer % 3600) / 60;
+  if (d == CLOCKWISE && minutes < 59)
+    timer += 60;
+  else if (d == COUNTERCLOCKWISE && minutes > 0)
+    timer -= 60;
+}
+
+void change_seconds(enum direction d)
+{
+  int seconds = (timer % 3600) % 60;
+  if (d == CLOCKWISE && seconds < 59)
+    timer++;
+  else if (d == COUNTERCLOCKWISE && seconds > 0)
+    timer--;
 }
 
 void read_array_eeprom(char *buffer, int length, int addr)
@@ -555,14 +528,27 @@ void setup(void)
   digitalWrite(RELAY, LOW);
   digitalWrite(LED, LOW);
 
+  print_target(TARGET_X, TARGET_Y);
+
   lcd.createChar(0, clock);
+  lcd.setCursor(TIMER_X - 1, TIMER_Y);
+  lcd.write(byte(0));
+  
+  lcd.setCursor(TIMER_X, TIMER_Y);
+  lcd.print("00:00:00");
+
   lcd.createChar(1, tmp_sprite);
+  lcd.setCursor(TEMP_X - 1, TEMP_Y);
+  lcd.write(byte(1));
+  
+  lcd.setCursor(TEMP_X + 4, TEMP_Y);
+  lcd.write(0xDF); //degree sign
+  lcd.write('C');
+
   lcd.createChar(2, arrow);
   
   init_timer();
 
-  current_mode.init();
-  
   //do not block while reading data from sensor
   sensors.setWaitForConversion(false);
 
@@ -792,7 +778,7 @@ bool get_authentication(Stream &stream)
   }
 }
 
-void update_serial(void)
+void update_IO(void)
 {
   #ifdef WIFI_ENABLED
   interpret_stream_auth(Serial);
@@ -845,15 +831,13 @@ void update_tick(void)
 void loop(void)
 {  
   static bool foo = false;
-  update_serial();
+  update_IO();
   
   if (!digitalRead(PWR_SWITCH) && !foo)
   {
     activated = !activated;
     foo = true;
-    #ifdef DEBUG_ENABLED
-    Serial.println("push");
-    #endif
+    
     if (activated) //timer starting, reset timer counter
       TCNT1 = 0;
   }
@@ -866,13 +850,11 @@ void loop(void)
     tick = false;
   }
 
-  current_mode.update();
-  
+  update_display();
   digitalWrite(LED, activated);
   
   if (!activated)
     digitalWrite(RELAY, LOW);
-  // multiply by 10 because fixed point number
   else if (temperature < 10 * target - interval)
     digitalWrite(RELAY, HIGH);
   else if (temperature > 10 * target + interval)
