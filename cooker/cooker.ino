@@ -6,15 +6,17 @@
 #include <EEPROM.h>
 
 #include "vars.h"
+#include "display.h"
 #include "interpreter.h"
 
 //#define WIFI_ENABLED
 #define DEBUG_ENABLED
 
 #define TEMP_DEFAULT 50
-#define INTERVAL     5
-#define TEMP_PERIOD  20
+#define TEMP_PERIOD  15
 #define AUTH_TIMEOUT 600
+
+#define AT_DELAY 200
 
 /* * * * * * * * * * *
  * Pin designations  *
@@ -37,13 +39,9 @@
 // temperature sensor
 #define ONEWIRE 9
 
-// BT module
+// bluetooth
 #define BT_TX   18 //A4, goes to rx on module through voltage divider
 #define BT_RX   19 //A5, goes to tx on module
-
-// WiFi module [deprecated?]
-//#define WIFI_TX 14
-//#define WIFI_RX 15
 
 #define PWR_SWITCH 14
 
@@ -51,33 +49,10 @@
 
 #define LED     17
 
-
-
-// coordinates on LCD display
-#define TIMER_X 1
-#define TIMER_Y 0
-#define TEMP_X 1
-#define TEMP_Y 1
-#define LCD_W  16
-#define LCD_H  2
-
-#define AT_DELAY 200
-
-#define CLOCK byte(0)
-#define SENSOR byte(1)
-#define ARROW byte(2)
-
-enum direction
-{
-  COUNTERCLOCKWISE,
-  CLOCKWISE,
-};
-
 /*  Necessary function prototypes. Arduino IDE prepends function
     prototypes during compilation, but they are declared before
     dependencies such as structs or enums are declared. */
     
-typedef void (*mode_func)(enum direction);
 typedef void (*print_func)(int, int);
 typedef int (*rcv_func)(Stream &, char *);
 typedef void (*send_func)(Stream &, const char *);
@@ -85,85 +60,6 @@ typedef int32_t fixed; //fixed point number, one decimal precision
 
 bool interpret_stream_auth(Stream &stream);
 bool interpret_stream(Stream &stream, rcv_func rcv, send_func snd);
-
-void view_change(enum direction d);
-void menu_change(enum direction d);
-void target_change(enum direction d);
-void timer_change(enum direction d);
-
-/* * * * * * * * * *
- * LCD MENU STRUCTS*
- * * * * * * * * * */
-
-// Custom 8x5 LCD characters
-byte clock[8] =
-{
-  B00000,
-  B00100,
-  B01110,
-  B01110,
-  B01110,
-  B11111,
-  B00100,
-  B00000,
-};
-
-byte tmp_sprite[8] =
-{
-  B00100,
-  B01010,
-  B01010,
-  B01110,
-  B01110,
-  B11111,
-  B11111,
-  B01110,
-};
-
-byte arrow[8] =
-{
-  B10000,
-  B11000,
-  B11100,
-  B11110,
-  B11100,
-  B11000,
-  B10000,
-  B00000,
-};
-
-struct lcd_mode
-{
-  void (*init)(void);
-  mode_func change;
-  void (*update)(void);
-  struct lcd_mode (*next)(void);
-};
-
-struct option
-{
-  char *menu_text;
-  char *option_text;
-  struct lcd_mode next;
-};
-
-struct lcd_mode mode[] =
-{
-  { view_init,      view_change,    view_update, view_next   },
-  { menu_init,      menu_change,    menu_update, menu_next   },
-  { opt_trgt_init,  target_change,  opt_trgt_update, option_next },
-  { opt_tmr_init,   timer_change,   opt_tmr_update, option_next },
-};
-struct lcd_mode current_mode = mode[0];
-
-struct option options[] =
-{
-  { "Target", "Target temp.:", mode[2] },
-  { "Timer", "Timer:", mode[3] },
-};
-int menu_position = 0;
-
-/*************************************************/
 
 // IP address of WIFI-module, represented as a string for ease of use with interpreter 
 char esp_ip[16] = { "0.0.0.0" };
@@ -175,7 +71,6 @@ char auth_ip[4];
 
 // cooker properties
 int32_t target = TEMP_DEFAULT; // desired temperature
-const fixed interval = INTERVAL; //temperature interval
 int32_t timer; //countdown measured in seconds
 fixed temperature;
 int32_t activated;
@@ -189,256 +84,41 @@ DallasTemperature sensors(&tempWire);
 SoftwareSerial BT(BT_RX, BT_TX, false);
 
 bool tick = false; //one tick every second
+bool tock = false; //one tock every 10ms
 int cycle_length = 10; //10 time units, 1 time unit == 10ms
 float duty_cycle;
-float kp;
+int kp = 15; //proportional gain
+int ki = 0;
+int kd = 0;
 
 void update_controller(void)
 {
+  static fixed error_old = 0;
+  
   fixed error = 10 * target - temperature;
   
-  duty_cycle = kp * error;
+  fixed integral = (error_old + error) / 2; //trapezoidal rule
+  fixed derivative = error - error_old;
+  duty_cycle = (kp * error + ki * integral + kd * derivative) / 100;
   
   if (duty_cycle > 1)
     duty_cycle = 1;
   else if (duty_cycle < 0)
     duty_cycle = 0;
+    
+  error_old = error;
 }
 
 void update_relay(void)
 {
   static int cycle_time = 0;
-  if (cycle_time <= duty_cycle * 10)
+  if (cycle_time++ < duty_cycle * 10)
     digitalWrite(RELAY, HIGH);
   else
     digitalWrite(RELAY,LOW);
     
-  cycle_time++;
   if (cycle_time >= cycle_length)
     cycle_time = 0;
-}
-
-/* * * * * * * * *
- * LCD FUNCTIONS *
- * * * * * * * * */
-
-// VIEW //
-
-void view_init(void)
-{
-  lcd.setCursor(TIMER_X - 1, TIMER_Y);
-  lcd.write(CLOCK);
-  
-  lcd.setCursor(TIMER_X, TIMER_Y);
-  lcd.print("00:00:00");
-
-  lcd.setCursor(TEMP_X - 1, TEMP_Y);
-  lcd.write(SENSOR);
-  
-  lcd.setCursor(TEMP_X + 4, TEMP_Y);
-  lcd.write(0xDF); //degree sign
-  lcd.write('C');
-  
-  print_temperature(TEMP_X, TEMP_Y);
-  print_timer(TIMER_X, TIMER_Y);
-}
-
-void view_update(void)
-{
-  static int temp_old = temperature;
-  static int timer_old = timer;
-  
-  if (temperature != temp_old)
-  {
-    print_temperature(TEMP_X, TEMP_Y);
-    temp_old = temperature;
-  }
-    
-  if (timer != timer_old)
-  {
-    print_timer(TIMER_X, TIMER_Y);
-    timer_old = timer;
-  }
-}
-
-// dummy function
-void view_change(enum direction d)
-{
-}
-
-struct lcd_mode view_next(void)
-{
-  return mode[1];
-}
-
-// MENU //
-
-#define SET_MENU_POS(X) (lcd.setCursor(1 + 7 * ((X) % 2), (X) / 2))
-void menu_init(void)
-{
-  int i = 0;
-  menu_position = 0;
-  
-  for (i = 0; i < sizeof(options)/sizeof(*options); i++)
-  {
-    SET_MENU_POS(i);
-    lcd.print(options[i].menu_text);
-  }
-  
-  SET_MENU_POS(i);
-  lcd.print("Back");
-  
-  display_cursor();
-}
-
-void menu_update(void)
-{
-}
-
-void display_cursor(void)
-{
-  lcd.setCursor(7 * (menu_position % 2), menu_position / 2);
-  lcd.write(ARROW);
-}
-
-void menu_change(enum direction d)
-{
-  lcd.setCursor(7 * (menu_position % 2), menu_position / 2);
-  lcd.write(' '); //clear cursor
-  
-  if (d == COUNTERCLOCKWISE)
-    menu_position--;
-  else //CLOCKWISE
-    menu_position++;
-    
-  if (menu_position < 0)
-     menu_position = sizeof(options) / sizeof(*options);
-  else if (menu_position > sizeof(options)/sizeof(*options))
-    menu_position = 0;
-    
-  display_cursor();
-}
-
-struct lcd_mode menu_next(void)
-{
-  if (menu_position < sizeof(options)/sizeof(*options))
-    return options[menu_position].next;
-  else
-    return mode[0];
-}
-
-
-// OPTION //
-
-void opt_trgt_init(void)
-{
-  lcd.setCursor(0, 0);
-  lcd.print("Target temp.:");
-  print_target(0, 1);
-  lcd.write(0xDF); //degree sign
-  lcd.write('C');  
-}
-
-void opt_tmr_init(void)
-{
-  lcd.setCursor(0, 0);
-  lcd.print("Timer:");
-  lcd.setCursor(0, 1);
-  
-  print_timer(0, 1);
-}
-
-void opt_trgt_update(void)
-{
-  static int target_old = target;
-  
-  if (target != target_old)
-  {
-    print_target(0, 1);
-    target_old = target;
-  }
-}
-
-void opt_tmr_update(void)
-{
-  static int timer_old = timer;
-  
-  if (timer != timer_old)
-  {
-    print_timer(0, 1);
-    timer_old = timer;
-  }
-}
-
-void target_change(enum direction d)
-{
-  if (d == CLOCKWISE)
-    target = (target == TEMP_MAX) ? TEMP_MAX : target + 1;
-  else
-    target = (target == TEMP_MIN) ? TEMP_MIN : target - 1;
-}
-
-void timer_change(enum direction d)
-{
-  int minutes = (timer % 3600) / 60;
-  if (d == CLOCKWISE)
-    timer += 5 * 60; //5 minutes increment
-  else if (d == COUNTERCLOCKWISE && minutes >= 5)
-    timer -= 5 * 60;
-}
-
-struct lcd_mode option_next(void)
-{
-  return mode[0];
-}
-    
-void print_time(int col, int row, int val)
-{
-    char num_string[3] = { 0 };
-    sprintf(num_string, "%02d", val);
-    
-    lcd.setCursor(col, row);
-    lcd.print(num_string);
-}
-
-void print_timer(int col, int row)
-{
-  int hours, minutes;
-  uint32_t tmp = timer;
-
-  // hours
-  hours = tmp / 3600;
-  print_time(col, row, hours);
-  lcd.write(':');
-
-  // minutes
-  tmp %= 3600;
-  minutes = tmp / 60;
-  print_time(col + 3, row, minutes);
-  lcd.write(':');
-  
-  // seconds
-  tmp %= 60;
-  print_time(col + 6, row, tmp);
-}
-
-void print_target(int col, int row)
-{
-  lcd.setCursor(col, row);
-  lcd.print("  "); //erase previous entry
-  lcd.setCursor(col, row);
-  lcd.print(target);
-}
-
-void print_temperature(int col, int row)
-{
-  char str[5];
-  //format "xx.x" degrees
-  int t = temperature; //sprintf doesn't take kindly to int32_t
-  sprintf(str, "%02d.%d", t / 10, t % 10);
-  
-  lcd.setCursor(col, row);
-  lcd.print(str);
 }
 
 void cw_event(void)
@@ -465,14 +145,13 @@ void init_timer(void)
   TCCR1B = 0;
   TCNT1 = 0;
 
-  //set timer every second
-  OCR1A = 15625;
+  //timer every 10ms
+  OCR1A = 625;
   TCCR1B |= (1 << WGM12); //ctc mode
 
-  //1/1024 prescaler
-  TCCR1B |= (1 << CS10);
+  //1/256 prescaler
   TCCR1B |= (1 << CS12);
-
+  
   TIMSK1 |= (1 << OCIE1A); //timer cmp interrupt
   interrupts();
 }
@@ -486,11 +165,22 @@ void update_temperature(void)
   Serial.println(temperature);
   auth_timer = 0;
   #endif // DEBUG_ENABLED
+  
+  update_controller();
 }
 
 SIGNAL(TIMER1_COMPA_vect)
 {
-  tick = true;
+  static int sec_counter = 0;
+  
+  if (++sec_counter == 100) //one second has passed
+  {
+    tick = true;
+    sec_counter = 0;
+  }
+  
+  if (activated)
+    tock = true;
 }
 
 ISR(PCINT0_vect)
@@ -843,7 +533,8 @@ void update_tick(void)
 }
 
 void loop(void)
-{  
+{
+  // software solution to avoid contact bounce
   static bool foo = false;
   update_serial();
   
@@ -857,8 +548,6 @@ void loop(void)
     if (activated) //timer starting, reset timer counter
       TCNT1 = 0;
   }
-  else if (digitalRead(PWR_SWITCH) && foo)
-    foo = false;
 
   if (tick)
   {
@@ -866,6 +555,13 @@ void loop(void)
     tick = false;
   }
 
+  if (tock)
+  {
+    update_relay();
+    tock = false;
+    foo = false;
+  }
+  
   current_mode.update();
   
   digitalWrite(LED, activated);
@@ -873,9 +569,9 @@ void loop(void)
   if (!activated)
     digitalWrite(RELAY, LOW);
   // multiply by 10 because fixed point number
-  else if (temperature < 10 * target - interval)
-    digitalWrite(RELAY, HIGH);
-  else if (temperature > 10 * target + interval)
-    digitalWrite(RELAY, LOW);
+  //else if (temperature < 10 * target - interval)
+  //  digitalWrite(RELAY, HIGH);
+  //else if (temperature > 10 * target + interval)
+  //  digitalWrite(RELAY, LOW);*/
 }
 

@@ -44,6 +44,9 @@ enum var_name
 	V_SSID,
 	V_PASSWORD,
 	V_IP,
+	V_KP,
+	V_KD,
+	V_KI,
 };
 
 union token_value
@@ -93,6 +96,9 @@ static struct variable variables[] =
 	[V_SSID]   = { ssid, "SSID", P_RW, T_STRING, 0, 0, },
 	[V_PASSWORD] = { password, "PASSWORD", P_W, T_STRING, 0, 0 },
 	[V_IP] = { esp_ip, "IP", P_R, T_STRING, 0, 0 },
+	[V_KP] = { &kp, "KP", P_RW, T_INTEGER, 0, 100 },
+	[V_KI] = { &ki, "KI", P_RW, T_INTEGER, 0, 100 },
+	[V_KD] = { &kd, "KD", P_RW, T_INTEGER, 0, 100 },
 };
 
 #define WRITABLE(V) 	(variables[V].perm & P_W)

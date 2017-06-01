@@ -1,5 +1,5 @@
-#ifndef INTERPRETERR_H
-#define INTERPRETERR_H
+#ifndef INTERPRETER_H
+#define INTERPRETER_H
 
 #include <stdbool.h>
 
