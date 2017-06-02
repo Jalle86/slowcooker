@@ -15,6 +15,8 @@
 #define TEMP_DEFAULT 50
 #define TEMP_PERIOD  15
 #define AUTH_TIMEOUT 600
+#define KP 30 //default proportional gain
+#define KI 0
 
 #define AT_DELAY 200
 
@@ -87,8 +89,8 @@ bool tick = false; //one tick every second
 bool tock = false; //one tock every 10ms
 int cycle_length = 10; //10 time units, 1 time unit == 10ms
 float duty_cycle;
-int kp = 15; //proportional gain
-int ki = 0;
+int kp = KP; //proportional gain
+int ki = KI;
 int kd = 0;
 
 void update_controller(void)
@@ -99,13 +101,14 @@ void update_controller(void)
   
   fixed integral = (error_old + error) / 2; //trapezoidal rule
   fixed derivative = error - error_old;
-  duty_cycle = (kp * error + ki * integral + kd * derivative) / 100;
+  duty_cycle = (kp * error + ki * integral + kd * derivative) / 100.0;
   
   if (duty_cycle > 1)
     duty_cycle = 1;
   else if (duty_cycle < 0)
     duty_cycle = 0;
-    
+  
+  Serial.println(duty_cycle);
   error_old = error;
 }
 
@@ -553,13 +556,13 @@ void loop(void)
   {
     update_tick();
     tick = false;
+    foo = false;
   }
 
   if (tock)
   {
     update_relay();
     tock = false;
-    foo = false;
   }
   
   current_mode.update();

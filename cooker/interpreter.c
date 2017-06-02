@@ -63,12 +63,12 @@ struct token
 
 struct variable
 {
-	void *addr;
-	char *symbol;
-	enum permission perm;
-	enum token_id type;
-	int min;
-	int max;
+	void *addr; //address to variable
+	char *symbol; //string representation in interpreter
+	enum permission perm; //read, write or both
+	enum token_id type; //what type the variable should be treated as
+	int min; //minimum value, if integer
+	int max; //maximum value, if integer
 };
 
 //function prototypes
