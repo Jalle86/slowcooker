@@ -1,5 +1,5 @@
-#ifndef VARS_H
-#define VARS_H
+#ifndef GLOBALS_H
+#define GLOBALS_H
 
 #include <stdint.h>
 
@@ -22,4 +22,4 @@ extern char esp_ip[16];
 extern char ssid[SSID_LEN];
 extern char password[PW_LEN];
 
-#endif
+#endif //GLOBALS_H

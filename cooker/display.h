@@ -2,7 +2,7 @@
 #define DISPLAY_H
 
 #include <Arduino.h>
-#include "vars.h"
+#include "globals.h"
 
 // coordinates on LCD display
 #define TIMER_X 1
@@ -18,18 +18,19 @@
 
 enum direction
 {
-  COUNTERCLOCKWISE,
-  CLOCKWISE,
+    COUNTERCLOCKWISE,
+    CLOCKWISE,
 };
 
 typedef void (*mode_func)(enum direction);
+typedef struct lcd_state (*state_func)(void);
 
-struct lcd_mode
+struct lcd_state
 {
-	void (*init)(void);
-	mode_func change;
-	void (*update)(void);
-	struct lcd_mode (*next)(void);
+    void (*init)(void); //called when state initialized
+    void (*mode_func)(enum direction); // called on rotary encoder
+    void (*update)(void); // called every update cycle
+    struct lcd_state (*state_func)(void); //next state, called on button press
 };
 
 class LiquidCrystal;
@@ -38,7 +39,7 @@ extern byte clock[8];
 extern byte tmp_sprite[8];
 extern byte arrow[8];
 
-extern struct lcd_mode current_mode;
+extern struct lcd_state current_mode;
 extern LiquidCrystal lcd;
 
 #endif //DISPLAY_H
