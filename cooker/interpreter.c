@@ -44,6 +44,7 @@ enum var_name
     V_SSID,
     V_PASSWORD,
     V_IP,
+    V_AUTH,
     V_KP,
     V_KD,
     V_KI,
@@ -89,16 +90,17 @@ static char token_string[20];
 static struct variable variables[] =
 {
     [V_NONE]   = { 0 },
-    [V_TEMP]   = { &temperature, "TEMP", P_R,  T_FIXED, 0, 0 },
-    [V_TIMER]  = { &timer, "TIMER", P_RW, T_INTEGER, 0, INT_MAX },
-    [V_STATUS] = { &activated,	"STATUS", P_RW, T_INTEGER, 0, 1 },
-    [V_TARGET] = { &target, "TARGET", P_RW, T_INTEGER, TEMP_MIN, TEMP_MAX },
-    [V_SSID]   = { ssid, "SSID", P_RW, T_STRING, 0, 0, },
-    [V_PASSWORD] = { password, "PASSWORD", P_W, T_STRING, 0, 0 },
-    [V_IP] = { esp_ip, "IP", P_R, T_STRING, 0, 0 },
-    [V_KP] = { &kp, "KP", P_RW, T_INTEGER, 0, 100 },
-    [V_KI] = { &ki, "KI", P_RW, T_INTEGER, 0, 100 },
-    [V_KD] = { &kd, "KD", P_RW, T_INTEGER, 0, 100 },
+    [V_TEMP]   = 	{ &temperature, "TEMP", P_R,  T_FIXED, 0, 0 },
+    [V_TIMER]  = 	{ &timer, "TIMER", P_RW, T_INTEGER, 0, INT_MAX },
+    [V_STATUS] = 	{ &activated,	"STATUS", P_RW, T_INTEGER, 0, 1 },
+    [V_TARGET] = 	{ &target, "TARGET", P_RW, T_INTEGER, TEMP_MIN, TEMP_MAX },
+    [V_SSID]   = 	{ ssid, "SSID", P_RW, T_STRING, 0, 0, },
+    [V_PASSWORD] = 	{ password, "PASSWORD", P_W, T_STRING, 0, 0 },
+    [V_IP] = 		{ esp_ip, "IP", P_R, T_STRING, 0, 0 },
+    [V_AUTH] = 		{ auth_phrase, "AUTH", P_RW, T_STRING, 0, 0 },
+    [V_KP] = 		{ &kp, "KP", P_RW, T_INTEGER, 0, 100 },
+    [V_KI] = 		{ &ki, "KI", P_RW, T_INTEGER, 0, 100 },
+    [V_KD] = 		{ &kd, "KD", P_RW, T_INTEGER, 0, 100 },
 };
 
 #define WRITABLE(V) 	(variables[V].perm & P_W)

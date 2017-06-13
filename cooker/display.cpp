@@ -76,7 +76,7 @@ static struct lcd_state states[] =
     { opt_trgt_init,  target_change,  opt_trgt_update, option_next },
     { opt_tmr_init,   timer_change,   opt_tmr_update, option_next },
 };
-struct lcd_state current_mode = states[0];
+struct lcd_state current_state = states[0];
 
 static struct option options[] =
 {

@@ -9,8 +9,8 @@
 #include "display.h"
 #include "interpreter.h"
 
-//#define WIFI_ENABLED
-#define DEBUG_ENABLED
+#define WIFI_ENABLED
+//#define DEBUG_ENABLED
 
 #define TEMP_DEFAULT 50
 #define TEMP_PERIOD  15
@@ -67,7 +67,7 @@ bool interpret_stream(Stream &stream, rcv_func rcv, send_func snd);
 char esp_ip[16] = { "0.0.0.0" };
 
 bool authenticated;
-const char *auth_phrase = "1234567890";
+char auth_phrase[20] = "1234567890";
 int auth_timer;
 char auth_ip[4];
 
@@ -126,19 +126,19 @@ void update_relay(void)
 
 void cw_event(void)
 {
-    current_mode.mode_func(CLOCKWISE);
+    current_state.mode_func(CLOCKWISE);
 }
 
 void ccw_event(void)
 {
-    current_mode.mode_func(COUNTERCLOCKWISE);
+    current_state.mode_func(COUNTERCLOCKWISE);
 }
 
 void btn_event(void)
 {
     lcd.clear();
-    current_mode = current_mode.state_func();
-    current_mode.init();
+    current_state = current_state.state_func();
+    current_state.init();
 }
 
 void init_timer(void)
@@ -254,11 +254,13 @@ void setup(void)
 
     init_timer();
 
-    current_mode.init();
+    current_state.init();
 
     //do not block while reading data from sensor
     sensors.setWaitForConversion(false);
 
+	delay(5000); //allow wifi module to start
+	
     #ifdef WIFI_ENABLED
     //allow multiple connections
     send_AT_cmd(Serial, "+CIPMUX=1", NULL);
@@ -282,7 +284,8 @@ void setup(void)
 
     read_array_eeprom(ssid, SSID_LEN, 0);
     read_array_eeprom(password, PW_LEN, SSID_LEN);
-
+	read_array_eeprom(auth_phrase, AUTH_LEN, SSID_LEN + PW_LEN);
+	
     #endif // WIFI_ENABLED
 
     // connect to AP
@@ -326,6 +329,7 @@ bool interpret_stream(Stream &stream, rcv_func rcv, send_func snd)
         interpret(in_buffer, out_buffer);
         update_array_eeprom<ssid, SSID_LEN>(0);
         update_array_eeprom<password, PW_LEN>(SSID_LEN);
+        update_array_eeprom<auth_phrase, AUTH_LEN>(SSID_LEN + PW_LEN);
         snd(stream, out_buffer);
 
         return true;
@@ -539,13 +543,13 @@ void update_tick(void)
 void loop(void)
 {
     // software solution to avoid contact bounce
-    static bool foo = false;
+    static bool debounce = false;
     update_serial();
 
-    if (!digitalRead(PWR_SWITCH) && !foo)
+    if (!digitalRead(PWR_SWITCH) && !debounce)
     {
         activated = !activated;
-        foo = true;
+        debounce = true;
         #ifdef DEBUG_ENABLED
         Serial.print("push ");
         Serial.println(activated);
@@ -558,7 +562,7 @@ void loop(void)
     {
         update_tick();
         tick = false;
-        foo = false;
+        debounce = false;
     }
 
     if (tock)
@@ -567,7 +571,7 @@ void loop(void)
         tock = false;
     }
 
-    current_mode.update();
+    current_state.update();
 
     digitalWrite(LED, activated);
 

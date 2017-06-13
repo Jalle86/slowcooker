@@ -39,7 +39,7 @@ extern byte clock[8];
 extern byte tmp_sprite[8];
 extern byte arrow[8];
 
-extern struct lcd_state current_mode;
+extern struct lcd_state current_state;
 extern LiquidCrystal lcd;
 
 #endif //DISPLAY_H
