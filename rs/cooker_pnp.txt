@@ -1,0 +1,68 @@
+*Pick And Place List
+*Company=
+*Author=
+*eMail=
+*
+*Project=cooker
+*Date=15:35:25
+*CreatedBy=Fritzing 0.8.5b.12.16.8b2c
+*
+*
+*Coordinates in mm, always center of component
+*Origin 0/0=Lower left corner of PCB
+*Rotation in degree (0-360, math. pos.)
+*
+*No;Value;Package;X;Y;Rotation;Side;Name
+1;;;14.7158;-75.0923;0;Bottom;Via14
+2;;;31.5196;-7.25939;0;Bottom;Hole5
+3;1k;THT;99.5195;-49.3394;-90;Bottom;R4
+4;;;62.5235;-21.8035;0;Bottom;LCD1
+5;;THT;10.9796;-36.2594;-90;Bottom;ROTARY ENCODER
+6;;;79.5197;-50.2593;0;Bottom;Via12
+7;;;52.5195;-77.2595;0;Bottom;Via13
+8;;THT;20.0276;-92.6364;0;Bottom;J2
+9;;;59.1188;-7.3951;0;Bottom;TXT1
+10;100nF;;27.0197;-74.7513;0;Bottom;Potentiometer
+11;;;30.5194;-62.2594;0;Bottom;Via7
+12;4.7k;THT;107.599;-89.2595;0;Bottom;R8
+13;;;112.33;-99.3393;0;Bottom;DS1
+14;;THT;109.519;-20.4494;-90;Bottom;S1
+15;;THT;58.9744;-83.4493;180;Bottom;BT1
+16;;;86.5196;-93.2595;0;Bottom;Hole7
+17;1k;THT;72.4397;-94.2593;180;Bottom;R7
+18;;;114.519;-93.2595;0;Bottom;Hole2
+19;1k;THT;58.4395;-94.2593;180;Bottom;R5
+20;3V;;29.2495;-88.2593;90;Bottom;5V
+21;1k;THT;85.5195;-49.3394;-90;Bottom;R2
+22;;;99.5196;-93.2595;0;Bottom;Via11
+23;;;3.5195;-7.25939;0;Bottom;Hole3
+24;;;96.5196;-34.2594;0;Bottom;Via2
+25;3V;;94.7894;-94.2593;-90;Bottom;3V3
+26;;;33.5194;-77.2595;0;Bottom;Via8
+27;;;25.5196;-62.2594;0;Bottom;Via6
+28;;THT;46.5495;-52.7193;-90;Bottom;ATMEGA328
+29;;5 mm [THT];109.52;-37.1084;180;Bottom;LED1
+30;;;63.5197;-73.2593;0;Bottom;Via5
+31;;;12.5196;-53.2593;0;Bottom;Via15
+32;;;13.5195;-59.2593;0;Bottom;Via1
+33;1k;THT;44.4396;-94.2593;180;Bottom;R6
+34;;;86.5196;-7.25939;0;Bottom;Hole6
+35;220;THT;110.52;-49.3394;-90;Bottom;R11
+36;1k;THT;41.4395;-44.2594;180;Bottom;R10
+37;;;35.5195;-77.2595;0;Bottom;Via10
+38;;;3.5195;-93.2595;0;Bottom;Hole4
+39;;;21.5097;-55.2662;0;Bottom;Via9
+40;20pF;100 mil [THT, tantalum];8.51944;-56.5293;-90;Bottom;C2
+41;;;31.5196;-93.2595;0;Bottom;Hole8
+42;1k;THT;92.5195;-49.3394;-90;Bottom;R3
+43;1k;THT;11.5996;-11.2594;0;Bottom;R9
+44;;;59.9072;-12.7472;0;Bottom;TXT2
+45;;;10.8416;-27.4945;0;Bottom;IMG1
+46;;;96.312;-63.3482;90;Bottom;ESP-01
+47;20pF;100 mil [THT, tantalum];8.51944;-50.5293;-90;Bottom;C1
+48;;THT;12.2796;-83.0009;0;Bottom;ASO242R
+49;;THT;14.5195;-53.7093;-90;Bottom;XTAL1
+50;;;114.519;-7.25939;0;Bottom;Hole1
+51;;;65.5195;-74.2595;0;Bottom;Via3
+52;;THT;5.02751;-85.6364;0;Bottom;J1
+53;;;68.5195;-69.2593;0;Bottom;Via4

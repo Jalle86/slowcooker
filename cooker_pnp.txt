@@ -1,0 +1,66 @@
+*Pick And Place List
+*Company=
+*Author=
+*eMail=
+*
+*Project=cooker
+*Date=15:28:42
+*CreatedBy=Fritzing 0.8.5b.12.16.8b2c
+*
+*
+*Coordinates in mm, always center of component
+*Origin 0/0=Lower left corner of PCB
+*Rotation in degree (0-360, math. pos.)
+*
+*No;Value;Package;X;Y;Rotation;Side;Name
+1;;;96.312;-63.3482;90;Bottom;ESP-01
+2;;;12.5196;-53.2593;0;Bottom;Via15
+3;;;31.5196;-93.2595;0;Bottom;Hole8
+4;;THT;5.02751;-85.6364;0;Bottom;J1
+5;;;65.5195;-74.2595;0;Bottom;Via3
+6;;;114.519;-93.2595;0;Bottom;Hole2
+7;;;3.5195;-7.25939;0;Bottom;Hole3
+8;100nF;;27.0197;-74.7513;0;Bottom;Potentiometer
+9;;;31.5196;-7.25939;0;Bottom;Hole5
+10;;;62.5235;-21.8035;0;Bottom;LCD1
+11;;;79.5197;-50.2593;0;Bottom;Via12
+12;;;86.5196;-93.2595;0;Bottom;Hole7
+13;;;3.5195;-93.2595;0;Bottom;Hole4
+14;1k;THT;99.5195;-49.3394;-90;Bottom;R4
+15;;;68.5195;-69.2593;0;Bottom;Via4
+16;20pF;100 mil [THT, tantalum];8.51944;-50.5293;-90;Bottom;C1
+17;;;21.5097;-55.2662;0;Bottom;Via9
+18;1k;THT;85.5195;-49.3394;-90;Bottom;R2
+19;3V;;94.7894;-94.2593;-90;Bottom;3V3
+20;;;30.5194;-62.2594;0;Bottom;Via7
+21;;;114.519;-7.25939;0;Bottom;Hole1
+22;;;33.5194;-77.2595;0;Bottom;Via8
+23;1k;THT;11.5996;-11.2594;0;Bottom;R9
+24;;;63.5197;-73.2593;0;Bottom;Via5
+25;;;52.5195;-77.2595;0;Bottom;Via13
+26;1k;THT;92.5195;-49.3394;-90;Bottom;R3
+27;;;96.5196;-34.2594;0;Bottom;Via2
+28;;;112.33;-99.3393;0;Bottom;DS1
+29;220;THT;110.52;-49.3394;-90;Bottom;R11
+30;1k;THT;44.4396;-94.2593;180;Bottom;R6
+31;;THT;20.0276;-92.6364;0;Bottom;J2
+32;20pF;100 mil [THT, tantalum];8.51944;-56.5293;-90;Bottom;C2
+33;4.7k;THT;107.599;-89.2595;0;Bottom;R8
+34;;5 mm [THT];109.52;-37.1084;180;Bottom;LED1
+35;;;25.5196;-62.2594;0;Bottom;Via6
+36;;THT;58.9744;-83.4493;180;Bottom;BT1
+37;;;10.8416;-27.4945;0;Bottom;IMG1
+38;;;99.5196;-93.2595;0;Bottom;Via11
+39;;;13.5195;-59.2593;0;Bottom;Via1
+40;;THT;109.519;-20.4494;-90;Bottom;S1
+41;1k;THT;72.4397;-94.2593;180;Bottom;R7
+42;;THT;10.9796;-36.2594;-90;Bottom;ROTARY ENCODER
+43;;;14.7158;-75.0923;0;Bottom;Via14
+44;3V;;29.2495;-88.2593;90;Bottom;5V
+45;1k;THT;58.4395;-94.2593;180;Bottom;R5
+46;;;86.5196;-7.25939;0;Bottom;Hole6
+47;;;35.5195;-77.2595;0;Bottom;Via10
+48;;THT;14.5195;-53.7093;-90;Bottom;XTAL1
+49;;THT;12.2796;-83.0009;0;Bottom;ASO242R
+50;1k;THT;41.4395;-44.2594;180;Bottom;R10
+51;;THT;46.5495;-52.7193;-90;Bottom;ATMEGA328
